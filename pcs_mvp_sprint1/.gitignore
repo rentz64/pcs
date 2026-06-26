@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+storage/pcs.sqlite3
+storage/objects/*
+!storage/objects/.gitkeep
+.env
