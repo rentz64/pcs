@@ -6,12 +6,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.database import Base, get_db
+from app.infrastructure.db.session import Base
+from app.infrastructure.db.orm_models import User
+from app.infrastructure.security.password import hash_password
+from app.infrastructure.storage.local import LocalObjectStorage
+from app.interfaces.api.dependencies import get_db_session, get_storage
 from app.main import app
-from app.models import User
-from app.security import hash_password
-from app.storage import LocalObjectStorage
-import app.main as main_module
 
 
 @pytest.fixture()
@@ -29,8 +29,8 @@ def client():
             finally:
                 db.close()
 
-        app.dependency_overrides[get_db] = override_get_db
-        main_module.storage = LocalObjectStorage(tmp_path / "objects")
+        app.dependency_overrides[get_db_session] = override_get_db
+        app.dependency_overrides[get_storage] = lambda: LocalObjectStorage(tmp_path / "objects")
         db = TestingSessionLocal()
         db.add(User(username="admin", password_hash=hash_password("admin-change-me"), role="owner"))
         db.commit()

@@ -68,3 +68,19 @@ Run the full test suite from the repository root:
 ```powershell
 .venv\Scripts\python.exe -m pytest
 ```
+
+## 8. Architecture
+
+PCS uses a Clean Architecture / Ports and Adapters layout:
+
+```text
+app/
+  domain/
+  application/
+  infrastructure/
+  interfaces/api/
+```
+
+Dependency direction points inward. The domain and application layers must not import FastAPI or SQLAlchemy. Infrastructure owns SQLite, SQLAlchemy, local filesystem object storage, password hashing, and token signing. API route modules are adapters that translate HTTP requests and responses to application use cases.
+
+Codex should start from the repository root, preserve existing API behaviour unless explicitly asked to change it, and run the full test suite before reporting completion.

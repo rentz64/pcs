@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from .config import settings
+from app.config import settings
 
 
 engine = create_engine(
@@ -20,3 +20,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def create_schema() -> None:
+    Base.metadata.create_all(bind=engine)

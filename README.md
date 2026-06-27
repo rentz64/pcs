@@ -1,10 +1,10 @@
-# PCS MVP Sprint 1
+# PCS Backend
 
-Private Content Service (PCS) - Sprint 1 MVP implementation.
+Private Content Service (PCS) backend.
 
-## Sprint 1 scope
+## Current scope
 
-This release implements the first end-to-end content lifecycle:
+The current backend preserves the Release 1.1 API contract and implements the first end-to-end content lifecycle:
 
 1. Local user authentication.
 2. Local SQLite database.
@@ -20,7 +20,22 @@ Cloud mirroring, IMAP mirroring, collaborative editing, advanced full-text extra
 
 ## Technology choices
 
-The backend uses Python and FastAPI. The database uses SQLite through SQLAlchemy. Object storage uses the local filesystem. The design keeps the storage service abstract enough to support a future encrypted cloud mirror.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranges the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details.
+
+## Project structure
+
+```text
+app/
+  domain/          # entities, errors, repository/storage/security protocols
+  application/     # auth, content, and audit use cases plus DTOs
+  infrastructure/  # SQLAlchemy, SQLite session, local storage, password and token services
+  interfaces/api/  # FastAPI routes, schemas, and dependency wiring
+  main.py          # app creation, lifespan, health, router registration
+docs/
+  adr/             # architecture decision records
+```
+
+Domain and application code must not import FastAPI or SQLAlchemy.
 
 ## Installation
 
@@ -96,7 +111,7 @@ These files are excluded from Git by `.gitignore`.
 
 ## Test-driven development notes
 
-The Sprint 1 tests cover authentication, upload, listing, search, download, and audit creation. New features should start from failing tests and then implementation.
+The integration tests cover authentication, upload, listing, search, download, and audit creation. Sprint 2 also includes use-case unit tests with fake repositories/storage. New behaviour should start from failing tests and then implementation.
 
 ## Branching and merge workflow
 
