@@ -2,6 +2,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import BinaryIO, Protocol
 
+from .blog import BlogPost
 from .entities import AuditEntry, ContentItem, User
 
 
@@ -38,6 +39,26 @@ class ContentRepository(Protocol):
 
 class ContentSearch(Protocol):
     def search(self, query: SearchQuery) -> list[ContentItem]:
+        ...
+
+
+class BlogPostRepository(Protocol):
+    def add(self, post: BlogPost) -> BlogPost:
+        ...
+
+    def update(self, post: BlogPost) -> BlogPost:
+        ...
+
+    def get_for_owner(self, post_id: int, owner_id: int) -> BlogPost | None:
+        ...
+
+    def get_by_slug_for_owner(self, slug: str, owner_id: int) -> BlogPost | None:
+        ...
+
+    def list_for_owner(self, owner_id: int) -> list[BlogPost]:
+        ...
+
+    def search_for_owner(self, owner_id: int, query: str) -> list[BlogPost]:
         ...
 
 

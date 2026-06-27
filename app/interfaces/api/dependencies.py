@@ -3,11 +3,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.application.auth_use_cases import AuthUseCases
+from app.application.blog_use_cases import BlogPostUseCases
 from app.application.content_use_cases import ContentUseCases
 from app.domain.entities import User
 from app.domain.errors import InvalidToken, UnknownUser
 from app.infrastructure.db.repositories import (
     SqlAlchemyAuditRepository,
+    SqlAlchemyBlogPostRepository,
     SqlAlchemyContentRepository,
     SqlAlchemyUserRepository,
 )
@@ -30,6 +32,10 @@ def get_user_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyUser
 
 def get_content_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyContentRepository:
     return SqlAlchemyContentRepository(db)
+
+
+def get_blog_post_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyBlogPostRepository:
+    return SqlAlchemyBlogPostRepository(db)
 
 
 def get_audit_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyAuditRepository:
@@ -63,6 +69,13 @@ def get_content_use_cases(
     object_storage: LocalObjectStorage = Depends(get_storage),
 ) -> ContentUseCases:
     return ContentUseCases(content, audits, object_storage)
+
+
+def get_blog_post_use_cases(
+    blog_posts: SqlAlchemyBlogPostRepository = Depends(get_blog_post_repository),
+    content: SqlAlchemyContentRepository = Depends(get_content_repository),
+) -> BlogPostUseCases:
+    return BlogPostUseCases(blog_posts, content)
 
 
 def current_user(

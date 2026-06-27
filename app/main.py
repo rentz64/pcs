@@ -11,6 +11,7 @@ from app.infrastructure.db.session import SessionLocal, create_schema, engine
 from app.infrastructure.security.password import Pbkdf2PasswordHasher
 from app.interfaces.api.routes_audit import router as audit_router
 from app.interfaces.api.routes_auth import router as auth_router
+from app.interfaces.api.routes_blog import router as blog_router
 from app.interfaces.api.routes_content import router as content_router
 
 
@@ -47,6 +48,7 @@ def health() -> dict[str, str]:
 
 app.include_router(auth_router)
 app.include_router(content_router)
+app.include_router(blog_router)
 app.include_router(audit_router)
 
 _ = orm_models

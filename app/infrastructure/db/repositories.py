@@ -1,6 +1,7 @@
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.domain.blog import BlogPost, BlogStatus
 from app.domain.entities import AuditEntry, ContentItem, User
 from app.domain.repositories import SearchQuery
 from app.infrastructure.db import orm_models
@@ -30,6 +31,22 @@ def _content(row: orm_models.ContentItem) -> ContentItem:
         tags=row.tags,
         created_at=row.created_at,
         updated_at=row.updated_at,
+    )
+
+
+def _blog(row: orm_models.BlogPost) -> BlogPost:
+    return BlogPost(
+        id=row.id,
+        owner_id=row.owner_id,
+        content_item=_content(row.content_item),
+        slug=row.slug,
+        body=row.body,
+        summary=row.summary,
+        status=BlogStatus(row.status),
+        tags=row.content_item.tags,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+        published_at=row.published_at,
     )
 
 
@@ -120,6 +137,92 @@ class SqlAlchemyContentRepository:
             .first()
         )
         return _content(row) if row else None
+
+
+class SqlAlchemyBlogPostRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add(self, post: BlogPost) -> BlogPost:
+        row = orm_models.BlogPost(
+            owner_id=post.owner_id,
+            content_item_id=post.content_item.id,
+            slug=post.slug,
+            body=post.body,
+            summary=post.summary,
+            status=post.status.value,
+            published_at=post.published_at,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _blog(row)
+
+    def update(self, post: BlogPost) -> BlogPost:
+        row = self.db.query(orm_models.BlogPost).filter(orm_models.BlogPost.id == post.id).first()
+        if row is None:
+            raise ValueError("Blog post not found")
+        content_row = row.content_item
+        content_row.title = post.content_item.title
+        content_row.description = post.content_item.description
+        content_row.original_filename = post.content_item.original_filename
+        content_row.stored_filename = post.content_item.stored_filename
+        content_row.size_bytes = post.content_item.size_bytes
+        content_row.tags = post.content_item.tags
+        content_row.updated_at = orm_models.now_utc()
+        row.slug = post.slug
+        row.body = post.body
+        row.summary = post.summary
+        row.status = post.status.value
+        row.published_at = post.published_at
+        row.updated_at = orm_models.now_utc()
+        self.db.commit()
+        self.db.refresh(row)
+        return _blog(row)
+
+    def get_for_owner(self, post_id: int, owner_id: int) -> BlogPost | None:
+        row = (
+            self.db.query(orm_models.BlogPost)
+            .filter(orm_models.BlogPost.id == post_id, orm_models.BlogPost.owner_id == owner_id)
+            .first()
+        )
+        return _blog(row) if row else None
+
+    def get_by_slug_for_owner(self, slug: str, owner_id: int) -> BlogPost | None:
+        row = (
+            self.db.query(orm_models.BlogPost)
+            .filter(orm_models.BlogPost.slug == slug, orm_models.BlogPost.owner_id == owner_id)
+            .first()
+        )
+        return _blog(row) if row else None
+
+    def list_for_owner(self, owner_id: int) -> list[BlogPost]:
+        rows = (
+            self.db.query(orm_models.BlogPost)
+            .filter(orm_models.BlogPost.owner_id == owner_id)
+            .order_by(orm_models.BlogPost.created_at.desc())
+            .all()
+        )
+        return [_blog(row) for row in rows]
+
+    def search_for_owner(self, owner_id: int, query: str) -> list[BlogPost]:
+        pattern = f"%{query}%"
+        rows = (
+            self.db.query(orm_models.BlogPost)
+            .join(orm_models.ContentItem)
+            .filter(orm_models.BlogPost.owner_id == owner_id)
+            .filter(
+                or_(
+                    orm_models.ContentItem.title.ilike(pattern),
+                    orm_models.BlogPost.body.ilike(pattern),
+                    orm_models.BlogPost.summary.ilike(pattern),
+                    orm_models.ContentItem.tags.ilike(pattern),
+                )
+            )
+            .order_by(orm_models.BlogPost.created_at.desc())
+            .all()
+        )
+        return [_blog(row) for row in rows]
 
 
 class SqlAlchemyAuditRepository:

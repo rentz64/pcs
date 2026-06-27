@@ -13,14 +13,15 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 5. File download.
 6. Content library listing.
 7. Search by title, description, filename, tags, and content type.
-8. Audit logging for important actions.
-9. Test suite using pytest and FastAPI TestClient.
+8. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
+9. Audit logging for important actions.
+10. Test suite using pytest and FastAPI TestClient.
 
-Blogs, email, maps, media-specific workflows, cloud sync, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
+Email, maps, media-specific workflows, cloud sync, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds blog management on top of `ContentItem`.
 
 ## Project structure
 
@@ -48,6 +49,22 @@ Domain and application code must not import FastAPI or SQLAlchemy.
 - a `ContentTypeHandlerRegistry` so future content types can plug in behavior without changing core use cases
 
 Sprint 3 does not add product-specific content workflows or new API endpoints.
+
+## Blog API
+
+Blog posts are implemented as specialised content backed by `ContentItem` plus blog-specific persistence.
+
+```text
+POST /blog/posts
+GET /blog/posts
+GET /blog/posts/{id}
+GET /blog/posts/slug/{slug}
+PUT /blog/posts/{id}
+POST /blog/posts/{id}/publish
+POST /blog/posts/{id}/unpublish
+```
+
+Slugs are unique per owner. Draft posts may be incomplete, but publishing requires a non-empty body.
 
 ## Installation
 
@@ -108,6 +125,7 @@ Change this before using the service with real data.
 5. Search with `GET /content/search?q=...`.
 
 6. Download with `GET /content/{content_id}/download`.
+7. Manage blog posts under `/blog/posts`.
 
 ## Local storage layout
 

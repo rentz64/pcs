@@ -21,3 +21,15 @@ class ContentNotFound(DomainError):
 class StoredObjectNotFound(DomainError):
     pass
 
+
+class BlogPostNotFound(DomainError):
+    pass
+
+
+class DuplicateSlug(DomainError):
+    pass
+
+
+class InvalidBlogPost(DomainError):
+    pass
+
