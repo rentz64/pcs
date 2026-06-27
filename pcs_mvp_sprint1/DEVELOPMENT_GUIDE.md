@@ -18,7 +18,7 @@ Primary platform:
 
 - Windows 11
 - PowerShell 7
-- Python 3.12
+- Python 3.14.6
 - Git
 - Node.js LTS
 - Notepad++
@@ -45,3 +45,25 @@ sprint/1
 sprint/1.1
 sprint/2
 sprint/3
+```
+
+The current project baseline is Python 3.14.
+
+Do not work directly on `main`. Use the current sprint branch for all development work.
+
+## 6. Development Rules
+
+- Use the project virtual environment and project scripts.
+- Do not use bare `python`; run Python through `.venv\Scripts\python.exe`.
+- Do not introduce Java or .NET components.
+- Do not commit secrets, databases, local storage, generated caches, or virtual environments.
+- Use test-driven development for behaviour changes.
+- Keep the project warning-free.
+
+## 7. Testing
+
+Run the full test suite from the project directory:
+
+```powershell
+.venv\Scripts\python.exe -m pytest
+```
