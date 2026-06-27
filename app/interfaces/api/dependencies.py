@@ -5,14 +5,20 @@ from sqlalchemy.orm import Session
 from app.application.auth_use_cases import AuthUseCases
 from app.application.blog_use_cases import BlogPostUseCases
 from app.application.content_use_cases import ContentUseCases
+from app.application.import_use_cases import ImportUseCases
 from app.domain.entities import User
 from app.domain.errors import InvalidToken, UnknownUser
 from app.infrastructure.db.repositories import (
     SqlAlchemyAuditRepository,
     SqlAlchemyBlogPostRepository,
     SqlAlchemyContentRepository,
+    SqlAlchemyExternalAccountRepository,
+    SqlAlchemyExternalSourceRepository,
+    SqlAlchemyImportBatchRepository,
+    SqlAlchemyImportJobRepository,
     SqlAlchemyUserRepository,
 )
+from app.infrastructure.imports.local_dummy import LocalDummyImportAdapter
 from app.infrastructure.db.session import get_db
 from app.infrastructure.security.password import Pbkdf2PasswordHasher
 from app.infrastructure.security.tokens import HmacTokenService
@@ -40,6 +46,22 @@ def get_blog_post_repository(db: Session = Depends(get_db_session)) -> SqlAlchem
 
 def get_audit_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyAuditRepository:
     return SqlAlchemyAuditRepository(db)
+
+
+def get_external_source_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyExternalSourceRepository:
+    return SqlAlchemyExternalSourceRepository(db)
+
+
+def get_external_account_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyExternalAccountRepository:
+    return SqlAlchemyExternalAccountRepository(db)
+
+
+def get_import_job_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyImportJobRepository:
+    return SqlAlchemyImportJobRepository(db)
+
+
+def get_import_batch_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyImportBatchRepository:
+    return SqlAlchemyImportBatchRepository(db)
 
 
 def get_password_hasher() -> Pbkdf2PasswordHasher:
@@ -76,6 +98,25 @@ def get_blog_post_use_cases(
     content: SqlAlchemyContentRepository = Depends(get_content_repository),
 ) -> BlogPostUseCases:
     return BlogPostUseCases(blog_posts, content)
+
+
+def get_import_use_cases(
+    sources: SqlAlchemyExternalSourceRepository = Depends(get_external_source_repository),
+    accounts: SqlAlchemyExternalAccountRepository = Depends(get_external_account_repository),
+    jobs: SqlAlchemyImportJobRepository = Depends(get_import_job_repository),
+    batches: SqlAlchemyImportBatchRepository = Depends(get_import_batch_repository),
+    content: SqlAlchemyContentRepository = Depends(get_content_repository),
+    audits: SqlAlchemyAuditRepository = Depends(get_audit_repository),
+) -> ImportUseCases:
+    return ImportUseCases(
+        sources,
+        accounts,
+        jobs,
+        batches,
+        content,
+        audits,
+        adapters={"local": LocalDummyImportAdapter()},
+    )
 
 
 def current_user(

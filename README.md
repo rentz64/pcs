@@ -13,15 +13,16 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 5. File download.
 6. Content library listing.
 7. Search by title, description, filename, tags, and content type.
-8. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
-9. Audit logging for important actions.
-10. Test suite using pytest and FastAPI TestClient.
+8. External import foundation with source/account registration, import jobs, and imported content provenance.
+9. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
+10. Audit logging for important actions.
+11. Test suite using pytest and FastAPI TestClient.
 
-Email, maps, media-specific workflows, cloud sync, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
+Real Gmail, Google Drive, Maps, IMAP, OAuth, cloud integrations, media processing, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds blog management on top of `ContentItem`.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata.
 
 ## Project structure
 
@@ -49,6 +50,33 @@ Domain and application code must not import FastAPI or SQLAlchemy.
 - a `ContentTypeHandlerRegistry` so future content types can plug in behavior without changing core use cases
 
 Sprint 3 does not add product-specific content workflows or new API endpoints.
+
+## External import foundation
+
+Imported content is represented by `ContentItem` with provenance fields:
+
+- `origin`
+- `external_source_id`
+- `external_account_id`
+- `external_content_id`
+- `external_content_type`
+- `imported_at`
+- `import_batch_id`
+- `source_url`
+- `source_reference`
+
+The import foundation adds external sources, external accounts, import jobs, import batches, an `ImportAdapter` port, and a deterministic local dummy adapter. It does not implement real external service integrations or credentials.
+
+```text
+POST /imports/sources
+GET /imports/sources
+POST /imports/accounts
+GET /imports/accounts
+GET /imports/sources/{source_id}/content-types
+POST /imports/jobs
+GET /imports/jobs
+GET /imports/jobs/{job_id}
+```
 
 ## Blog API
 
@@ -126,6 +154,7 @@ Change this before using the service with real data.
 
 6. Download with `GET /content/{content_id}/download`.
 7. Manage blog posts under `/blog/posts`.
+8. Register import sources/accounts and execute import jobs under `/imports`.
 
 ## Local storage layout
 

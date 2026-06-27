@@ -2,12 +2,15 @@
 
 ## Sprint 4
 
-- Added Blog Management on top of the Unified Content Platform.
-- Added blog draft, update, publish, unpublish, id lookup, slug lookup, listing, and search use cases.
-- Added `/blog/posts` API routes with owner scoping and slug uniqueness validation.
-- Added a `blog_posts` SQLite table linked to `content_items` so existing content behavior remains compatible.
-- Added blog unit and API integration tests.
-- Added ADR-0005 for the blog persistence decision.
+- Added the External Import Foundation for the Unified Content Platform.
+- Extended `ContentItem` with import provenance fields for origin, external source/account identifiers, external content identifiers, import batch, import timestamp, and source reference data.
+- Added external source, external account, import job, import batch, and imported content reference domain entities.
+- Added import adapter, repository, and use-case ports with SQLite infrastructure implementations.
+- Added deterministic local dummy import adapter support without real external service credentials or network integrations.
+- Added `/imports` API routes for source/account registration, supported content types, import job execution, job listing, and job status lookup.
+- Added import audit events for source/account registration, job creation/execution, and imported content.
+- Added import use-case and API integration tests.
+- Added ADR-0005 for the External Import Foundation decision.
 
 ## Sprint 3
 

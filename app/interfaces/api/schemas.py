@@ -57,3 +57,51 @@ class BlogPostOut(BaseModel):
     published_at: datetime | None
     tags: str
     collections: tuple[int, ...] = ()
+
+
+class ExternalSourceCreate(BaseModel):
+    name: str
+    source_type: str
+
+
+class ExternalSourceOut(BaseModel):
+    id: int
+    name: str
+    source_type: str
+    created_at: datetime
+
+
+class ExternalAccountCreate(BaseModel):
+    source_id: int
+    name: str
+    external_account_ref: str
+
+
+class ExternalAccountOut(BaseModel):
+    id: int
+    source_id: int
+    name: str
+    external_account_ref: str
+    created_at: datetime
+
+
+class ContentTypesOut(BaseModel):
+    content_types: list[str]
+
+
+class ImportJobCreate(BaseModel):
+    source_id: int
+    account_id: int
+    content_types: list[str] = []
+
+
+class ImportJobOut(BaseModel):
+    id: int
+    source_id: int
+    account_id: int
+    content_types: list[str]
+    status: str
+    imported_count: int
+    error_message: str | None
+    created_at: datetime
+    updated_at: datetime

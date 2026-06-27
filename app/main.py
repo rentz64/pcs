@@ -13,6 +13,7 @@ from app.interfaces.api.routes_audit import router as audit_router
 from app.interfaces.api.routes_auth import router as auth_router
 from app.interfaces.api.routes_blog import router as blog_router
 from app.interfaces.api.routes_content import router as content_router
+from app.interfaces.api.routes_imports import router as imports_router
 
 
 def init_db() -> None:
@@ -49,6 +50,7 @@ def health() -> dict[str, str]:
 app.include_router(auth_router)
 app.include_router(content_router)
 app.include_router(blog_router)
+app.include_router(imports_router)
 app.include_router(audit_router)
 
 _ = orm_models

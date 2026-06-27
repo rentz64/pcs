@@ -33,3 +33,19 @@ class DuplicateSlug(DomainError):
 class InvalidBlogPost(DomainError):
     pass
 
+
+class ExternalSourceNotFound(DomainError):
+    pass
+
+
+class ExternalAccountNotFound(DomainError):
+    pass
+
+
+class ImportJobNotFound(DomainError):
+    pass
+
+
+class ImportAdapterNotFound(DomainError):
+    pass
+

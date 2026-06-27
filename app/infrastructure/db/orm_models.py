@@ -33,6 +33,15 @@ class ContentItem(Base):
     mime_type: Mapped[str | None] = mapped_column(String(255), nullable=True)
     size_bytes: Mapped[int] = mapped_column(Integer)
     tags: Mapped[str] = mapped_column(Text, default="")
+    origin: Mapped[str] = mapped_column(String(32), default="native", index=True)
+    external_source_id: Mapped[int | None] = mapped_column(ForeignKey("external_sources.id"), nullable=True, index=True)
+    external_account_id: Mapped[int | None] = mapped_column(ForeignKey("external_accounts.id"), nullable=True, index=True)
+    external_content_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    external_content_type: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    imported_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    import_batch_id: Mapped[int | None] = mapped_column(ForeignKey("import_batches.id"), nullable=True, index=True)
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
@@ -55,6 +64,54 @@ class BlogPost(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
     content_item: Mapped[ContentItem] = relationship()
+
+
+class ExternalSource(Base):
+    __tablename__ = "external_sources"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    source_type: Mapped[str] = mapped_column(String(64), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+
+
+class ExternalAccount(Base):
+    __tablename__ = "external_accounts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("external_sources.id"), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    external_account_ref: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+
+
+class ImportJob(Base):
+    __tablename__ = "import_jobs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("external_sources.id"), index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("external_accounts.id"), index=True)
+    content_types: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="pending", index=True)
+    imported_count: Mapped[int] = mapped_column(Integer, default=0)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class ImportBatch(Base):
+    __tablename__ = "import_batches"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("import_jobs.id"), index=True)
+    source_id: Mapped[int] = mapped_column(ForeignKey("external_sources.id"), index=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey("external_accounts.id"), index=True)
+    imported_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
 
 
 class AuditLog(Base):

@@ -40,3 +40,23 @@ class UpdateBlogPostCommand:
     summary: str | None = None
     tags: str | None = None
     collections: tuple[int, ...] | None = None
+
+
+@dataclass(frozen=True)
+class RegisterExternalSourceCommand:
+    name: str
+    source_type: str
+
+
+@dataclass(frozen=True)
+class RegisterExternalAccountCommand:
+    source_id: int
+    name: str
+    external_account_ref: str
+
+
+@dataclass(frozen=True)
+class CreateImportJobCommand:
+    source_id: int
+    account_id: int
+    content_types: tuple[str, ...]

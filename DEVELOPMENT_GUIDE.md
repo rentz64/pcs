@@ -88,4 +88,6 @@ The Unified Content Platform lives in the domain and application layers. Generic
 
 Blog Management is implemented as a specialised content workflow on top of `ContentItem`. Blog domain and use-case code must remain independent of FastAPI and SQLAlchemy. Blog API routes should stay thin and translate HTTP payloads/errors to application use cases.
 
+The External Import Foundation is implemented through domain/application ports and infrastructure adapters. Import code must not use real external service credentials or call Gmail, Google Drive, Maps, IMAP, OAuth, or cloud services unless a future sprint explicitly introduces those integrations.
+
 Codex should start from the repository root, preserve existing API behaviour unless explicitly asked to change it, and run the full test suite before reporting completion.

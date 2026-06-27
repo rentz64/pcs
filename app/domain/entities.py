@@ -60,6 +60,15 @@ class ContentItem:
     mime_type: str | None
     size_bytes: int
     tags: str
+    origin: str = "native"
+    external_source_id: int | None = None
+    external_account_id: int | None = None
+    external_content_id: str | None = None
+    external_content_type: str | None = None
+    imported_at: datetime | None = None
+    import_batch_id: int | None = None
+    source_url: str | None = None
+    source_reference: str | None = None
     metadata: ContentMetadata | None = None
     collections: tuple[CollectionRef, ...] = ()
     version: VersionMetadata = field(default_factory=VersionMetadata)

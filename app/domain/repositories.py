@@ -4,6 +4,7 @@ from typing import BinaryIO, Protocol
 
 from .blog import BlogPost
 from .entities import AuditEntry, ContentItem, User
+from .imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob
 
 
 @dataclass(frozen=True)
@@ -59,6 +60,47 @@ class BlogPostRepository(Protocol):
         ...
 
     def search_for_owner(self, owner_id: int, query: str) -> list[BlogPost]:
+        ...
+
+
+class ExternalSourceRepository(Protocol):
+    def add(self, source: ExternalSource) -> ExternalSource:
+        ...
+
+    def list_for_owner(self, owner_id: int) -> list[ExternalSource]:
+        ...
+
+    def get_for_owner(self, source_id: int, owner_id: int) -> ExternalSource | None:
+        ...
+
+
+class ExternalAccountRepository(Protocol):
+    def add(self, account: ExternalAccount) -> ExternalAccount:
+        ...
+
+    def list_for_owner(self, owner_id: int) -> list[ExternalAccount]:
+        ...
+
+    def get_for_owner(self, account_id: int, owner_id: int) -> ExternalAccount | None:
+        ...
+
+
+class ImportJobRepository(Protocol):
+    def add(self, job: ImportJob) -> ImportJob:
+        ...
+
+    def update(self, job: ImportJob) -> ImportJob:
+        ...
+
+    def list_for_owner(self, owner_id: int) -> list[ImportJob]:
+        ...
+
+    def get_for_owner(self, job_id: int, owner_id: int) -> ImportJob | None:
+        ...
+
+
+class ImportBatchRepository(Protocol):
+    def add(self, batch: ImportBatch) -> ImportBatch:
         ...
 
 
