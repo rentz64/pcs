@@ -2,6 +2,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.domain.entities import AuditEntry, ContentItem, User
+from app.domain.repositories import SearchQuery
 from app.infrastructure.db import orm_models
 
 
@@ -91,10 +92,13 @@ class SqlAlchemyContentRepository:
         return [_content(row) for row in rows]
 
     def search_for_owner(self, owner_id: int, query: str) -> list[ContentItem]:
-        pattern = f"%{query}%"
+        return self.search(SearchQuery(owner_id=owner_id, text=query))
+
+    def search(self, query: SearchQuery) -> list[ContentItem]:
+        pattern = f"%{query.text}%"
         rows = (
             self.db.query(orm_models.ContentItem)
-            .filter(orm_models.ContentItem.owner_id == owner_id)
+            .filter(orm_models.ContentItem.owner_id == query.owner_id)
             .filter(
                 or_(
                     orm_models.ContentItem.title.ilike(pattern),

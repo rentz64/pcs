@@ -16,17 +16,17 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 8. Audit logging for important actions.
 9. Test suite using pytest and FastAPI TestClient.
 
-Cloud mirroring, IMAP mirroring, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside Sprint 1.
+Blogs, email, maps, media-specific workflows, cloud sync, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranges the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry.
 
 ## Project structure
 
 ```text
 app/
-  domain/          # entities, errors, repository/storage/security protocols
+  domain/          # entities, metadata, handlers, errors, repository/storage/security/search protocols
   application/     # auth, content, and audit use cases plus DTOs
   infrastructure/  # SQLAlchemy, SQLite session, local storage, password and token services
   interfaces/api/  # FastAPI routes, schemas, and dependency wiring
@@ -36,6 +36,18 @@ docs/
 ```
 
 Domain and application code must not import FastAPI or SQLAlchemy.
+
+## Unified content platform
+
+`ContentItem` is the generic domain model for uploaded content. It keeps the Release 1.1 fields used by the API and adds internal shared metadata:
+
+- normalized tag tuples derived from the legacy comma-separated `tags` field
+- collection references for future grouping workflows
+- version metadata for future revision tracking
+- a `SearchQuery` abstraction so search can move behind a dedicated adapter later
+- a `ContentTypeHandlerRegistry` so future content types can plug in behavior without changing core use cases
+
+Sprint 3 does not add product-specific content workflows or new API endpoints.
 
 ## Installation
 
@@ -111,7 +123,7 @@ These files are excluded from Git by `.gitignore`.
 
 ## Test-driven development notes
 
-The integration tests cover authentication, upload, listing, search, download, and audit creation. Sprint 2 also includes use-case unit tests with fake repositories/storage. New behaviour should start from failing tests and then implementation.
+The integration tests cover authentication, upload, listing, search, download, and audit creation. Use-case and platform tests use fake repositories/storage. New behaviour should start from failing tests and then implementation.
 
 ## Branching and merge workflow
 
@@ -147,7 +159,7 @@ git merge sprint-2-clean-architecture
 git tag sprint-2-accepted
 ```
 
-Use a clear branch name for every sprint, for example `sprint-1-mvp-foundation`, `sprint-2-clean-architecture`, `sprint-3-blog-management`, and so on.
+Use a clear branch name for every sprint, for example `sprint/1`, `sprint/2`, `sprint/3`, and so on.
 
 ## Sprint 1 v0.3 Bugfix
 

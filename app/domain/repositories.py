@@ -1,7 +1,17 @@
 from pathlib import Path
+from dataclasses import dataclass
 from typing import BinaryIO, Protocol
 
 from .entities import AuditEntry, ContentItem, User
+
+
+@dataclass(frozen=True)
+class SearchQuery:
+    owner_id: int
+    text: str = ""
+    content_types: tuple[str, ...] = ()
+    tags: tuple[str, ...] = ()
+    collection_ids: tuple[int, ...] = ()
 
 
 class UserRepository(Protocol):
@@ -23,6 +33,11 @@ class ContentRepository(Protocol):
         ...
 
     def get_for_owner(self, content_id: int, owner_id: int) -> ContentItem | None:
+        ...
+
+
+class ContentSearch(Protocol):
+    def search(self, query: SearchQuery) -> list[ContentItem]:
         ...
 
 

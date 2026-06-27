@@ -1,24 +1,36 @@
 from app.application.dto import DownloadContent, UploadContentCommand
+from app.domain.content_handlers import ContentTypeHandlerRegistry
 from app.domain.entities import AuditEntry, ContentItem, User
 from app.domain.errors import ContentNotFound, StoredObjectNotFound
-from app.domain.repositories import AuditRepository, ContentRepository, ObjectStorage
+from app.domain.repositories import AuditRepository, ContentRepository, ContentSearch, ObjectStorage, SearchQuery
 
 
 class ContentUseCases:
-    def __init__(self, content: ContentRepository, audits: AuditRepository, storage: ObjectStorage):
+    def __init__(
+        self,
+        content: ContentRepository,
+        audits: AuditRepository,
+        storage: ObjectStorage,
+        search: ContentSearch | None = None,
+        handlers: ContentTypeHandlerRegistry | None = None,
+    ):
         self.content = content
         self.audits = audits
         self.storage = storage
+        self.search = search
+        self.handlers = handlers or ContentTypeHandlerRegistry()
 
     def upload(self, user: User, command: UploadContentCommand) -> ContentItem:
         stored_name, size = self.storage.save(command.original_filename, command.content)
+        handler = self.handlers.get(command.content_type)
+        content_type = handler.normalize_content_type(command.content_type, command.mime_type, command.original_filename)
         item = self.content.add(
             ContentItem(
                 id=None,
                 owner_id=user.id,
                 title=command.title,
                 description=command.description,
-                content_type=command.content_type,
+                content_type=content_type,
                 original_filename=command.original_filename,
                 stored_filename=stored_name,
                 mime_type=command.mime_type,
@@ -42,6 +54,8 @@ class ContentUseCases:
         return self.content.list_for_owner(user.id)
 
     def search_for_user(self, user: User, query: str) -> list[ContentItem]:
+        if self.search:
+            return self.search.search(SearchQuery(owner_id=user.id, text=query))
         return self.content.search_for_owner(user.id, query)
 
     def prepare_download(self, user: User, content_id: int) -> DownloadContent:

@@ -1,5 +1,18 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
+
+
+def parse_tags(tags: str) -> tuple[str, ...]:
+    parsed: list[str] = []
+    seen: set[str] = set()
+    for tag in (part.strip() for part in tags.split(",")):
+        if not tag:
+            continue
+        key = tag.casefold()
+        if key not in seen:
+            parsed.append(tag)
+            seen.add(key)
+    return tuple(parsed)
 
 
 @dataclass(frozen=True)
@@ -9,6 +22,30 @@ class User:
     password_hash: str
     role: str
     created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class CollectionRef:
+    id: int
+    name: str
+
+
+@dataclass(frozen=True)
+class VersionMetadata:
+    version_number: int = 1
+    version_label: str | None = None
+    previous_content_id: int | None = None
+
+
+@dataclass(frozen=True)
+class ContentMetadata:
+    tags: tuple[str, ...] = ()
+    source: str = "local_upload"
+    attributes: dict[str, str] = field(default_factory=dict)
+
+    @classmethod
+    def from_legacy_tags(cls, tags: str) -> "ContentMetadata":
+        return cls(tags=parse_tags(tags))
 
 
 @dataclass(frozen=True)
@@ -23,8 +60,15 @@ class ContentItem:
     mime_type: str | None
     size_bytes: int
     tags: str
+    metadata: ContentMetadata | None = None
+    collections: tuple[CollectionRef, ...] = ()
+    version: VersionMetadata = field(default_factory=VersionMetadata)
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
+    def __post_init__(self) -> None:
+        if self.metadata is None:
+            object.__setattr__(self, "metadata", ContentMetadata.from_legacy_tags(self.tags))
 
 
 @dataclass(frozen=True)

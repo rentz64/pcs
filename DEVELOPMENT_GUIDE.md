@@ -83,4 +83,6 @@ app/
 
 Dependency direction points inward. The domain and application layers must not import FastAPI or SQLAlchemy. Infrastructure owns SQLite, SQLAlchemy, local filesystem object storage, password hashing, and token signing. API route modules are adapters that translate HTTP requests and responses to application use cases.
 
+The Unified Content Platform lives in the domain and application layers. Generic content metadata, tags, collections, version metadata, search ports, and content type handlers must remain independent of FastAPI and SQLAlchemy. Product-specific workflows such as blogs, email, maps, media, and cloud sync should be added only when a sprint explicitly requires them.
+
 Codex should start from the repository root, preserve existing API behaviour unless explicitly asked to change it, and run the full test suite before reporting completion.
