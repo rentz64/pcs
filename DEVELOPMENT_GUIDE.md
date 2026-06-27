@@ -11,6 +11,7 @@ The user acts as Product Owner, tester, and final integrator.
 ChatGPT acts as software architect, technical lead, reviewer, documentation assistant, and planning assistant.
 
 Codex CLI acts as the local coding agent that implements tasks inside the repository.
+Codex starts from the repository root, which is also the Python project root.
 
 ## 3. Development Platform
 
@@ -53,7 +54,7 @@ Do not work directly on `main`. Use the current sprint branch for all developmen
 
 ## 6. Development Rules
 
-- Use the project virtual environment and project scripts.
+- Use the project virtual environment and project scripts from the repository root.
 - Do not use bare `python`; run Python through `.venv\Scripts\python.exe`.
 - Do not introduce Java or .NET components.
 - Do not commit secrets, databases, local storage, generated caches, or virtual environments.
@@ -62,7 +63,7 @@ Do not work directly on `main`. Use the current sprint branch for all developmen
 
 ## 7. Testing
 
-Run the full test suite from the project directory:
+Run the full test suite from the repository root:
 
 ```powershell
 .venv\Scripts\python.exe -m pytest

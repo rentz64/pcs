@@ -24,11 +24,11 @@ The backend uses Python and FastAPI. The database uses SQLite through SQLAlchemy
 
 ## Installation
 
-```bash
-python -m venv .venv
-. .venv/bin/activate      # Linux/macOS
-# .venv\Scripts\activate # Windows PowerShell
-pip install -r requirements.txt
+Run commands from the repository root.
+
+```powershell
+py -3.14 -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
 ## Running tests
@@ -43,8 +43,8 @@ PowerShell 7-compatible commands will become the reference automation style from
 
 ## Running the service
 
-```bash
-uvicorn app.main:app --reload
+```powershell
+.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
 Open the generated API documentation at:

@@ -2,6 +2,11 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+*.pyo
+*.pyd
+*.sqlite
+*.sqlite3
+*.db
 storage/pcs.sqlite3
 storage/objects/*
 !storage/objects/.gitkeep
