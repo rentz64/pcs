@@ -6,6 +6,7 @@ from app.application.auth_use_cases import AuthUseCases
 from app.application.blog_use_cases import BlogPostUseCases
 from app.application.content_use_cases import ContentUseCases
 from app.application.import_use_cases import ImportUseCases
+from app.application.email_use_cases import EmailUseCases
 from app.application.media_use_cases import MediaUseCases
 from app.domain.entities import User
 from app.domain.errors import InvalidToken, UnknownUser
@@ -15,12 +16,14 @@ from app.infrastructure.db.repositories import (
     SqlAlchemyContentRepository,
     SqlAlchemyExternalAccountRepository,
     SqlAlchemyExternalSourceRepository,
+    SqlAlchemyEmailRepository,
     SqlAlchemyImportBatchRepository,
     SqlAlchemyImportJobRepository,
     SqlAlchemyMediaRepository,
     SqlAlchemyUserRepository,
 )
 from app.infrastructure.imports.local_dummy import LocalDummyImportAdapter
+from app.infrastructure.imports.fake_email import FakeEmailImportAdapter
 from app.infrastructure.db.session import get_db
 from app.infrastructure.security.password import Pbkdf2PasswordHasher
 from app.infrastructure.security.tokens import HmacTokenService
@@ -52,6 +55,10 @@ def get_audit_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyAud
 
 def get_media_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyMediaRepository:
     return SqlAlchemyMediaRepository(db)
+
+
+def get_email_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyEmailRepository:
+    return SqlAlchemyEmailRepository(db)
 
 
 def get_external_source_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyExternalSourceRepository:
@@ -132,6 +139,19 @@ def get_media_use_cases(
     object_storage: LocalObjectStorage = Depends(get_storage),
 ) -> MediaUseCases:
     return MediaUseCases(media, content, audits, object_storage)
+
+
+def get_email_use_cases(
+    emails: SqlAlchemyEmailRepository = Depends(get_email_repository),
+    content: SqlAlchemyContentRepository = Depends(get_content_repository),
+    audits: SqlAlchemyAuditRepository = Depends(get_audit_repository),
+    object_storage: LocalObjectStorage = Depends(get_storage),
+) -> EmailUseCases:
+    return EmailUseCases(emails, content, audits, object_storage)
+
+
+def get_fake_email_adapter() -> FakeEmailImportAdapter:
+    return FakeEmailImportAdapter()
 
 
 def current_user(

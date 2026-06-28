@@ -15,15 +15,16 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 7. Search by title, description, filename, tags, and content type.
 8. External import foundation with source/account registration, import jobs, and imported content provenance.
 9. Media library foundation for image and video uploads.
-10. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
-11. Audit logging for important actions.
-12. Test suite using pytest and FastAPI TestClient.
+10. Email mirroring foundation using a fake/local adapter.
+11. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
+12. Audit logging for important actions.
+13. Test suite using pytest and FastAPI TestClient.
 
-Real Gmail, Google Drive, Maps, IMAP, OAuth, cloud integrations, advanced media processing, AI classification, OCR, transcription, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
+Real Gmail OAuth, live email service connections, sending email, two-way mailbox sync, Google Drive, Maps, IMAP, OAuth integrations, cloud integrations, advanced media processing, AI classification, OCR, transcription, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter.
 
 ## Project structure
 
@@ -106,6 +107,18 @@ GET /media/{media_id}
 GET /media/{media_id}/download
 ```
 
+## Email API
+
+Mirrored emails are represented as imported `ContentItem` records with email-specific metadata and attachment metadata. Sprint 7 uses only a fake/local adapter for deterministic tests.
+
+```text
+POST /email/import/fake
+GET /email/messages
+GET /email/messages/{email_id}
+GET /email/messages/{email_id}/attachments
+GET /email/attachments/{attachment_id}/download
+```
+
 ## Installation
 
 Run commands from the repository root.
@@ -168,6 +181,7 @@ Change this before using the service with real data.
 7. Manage blog posts under `/blog/posts`.
 8. Register import sources/accounts and execute import jobs under `/imports`.
 9. Upload and download media under `/media`.
+10. Import and browse fake mirrored email under `/email`.
 
 ## Local storage layout
 

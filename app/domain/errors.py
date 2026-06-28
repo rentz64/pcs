@@ -57,3 +57,15 @@ class InvalidMediaType(DomainError):
 class MediaItemNotFound(DomainError):
     pass
 
+
+class EmailMessageNotFound(DomainError):
+    pass
+
+
+class EmailAttachmentNotFound(DomainError):
+    pass
+
+
+class InvalidEmailPayload(DomainError):
+    pass
+

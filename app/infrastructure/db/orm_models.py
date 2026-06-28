@@ -85,6 +85,47 @@ class MediaItem(Base):
     content_item: Mapped[ContentItem] = relationship()
 
 
+class EmailMessage(Base):
+    __tablename__ = "email_messages"
+    __table_args__ = (UniqueConstraint("owner_id", "external_account_id", "external_message_id", name="uq_email_owner_account_message"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    content_item_id: Mapped[int] = mapped_column(ForeignKey("content_items.id"), unique=True, index=True)
+    external_source_id: Mapped[int] = mapped_column(ForeignKey("external_sources.id"), index=True)
+    external_account_id: Mapped[int] = mapped_column(ForeignKey("external_accounts.id"), index=True)
+    external_message_id: Mapped[str] = mapped_column(String(255), index=True)
+    message_id_header: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    thread_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    subject: Mapped[str] = mapped_column(String(255), index=True)
+    sender: Mapped[str] = mapped_column(String(255), index=True)
+    recipients_to: Mapped[str] = mapped_column(Text, default="")
+    recipients_cc: Mapped[str] = mapped_column(Text, default="")
+    recipients_bcc: Mapped[str] = mapped_column(Text, default="")
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    received_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    folder: Mapped[str] = mapped_column(String(255), default="")
+    labels: Mapped[str] = mapped_column(Text, default="")
+    has_attachments: Mapped[int] = mapped_column(Integer, default=0)
+    text_body: Mapped[str] = mapped_column(Text, default="")
+    html_body: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    content_item: Mapped[ContentItem] = relationship()
+
+
+class EmailAttachment(Base):
+    __tablename__ = "email_attachments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email_id: Mapped[int] = mapped_column(ForeignKey("email_messages.id"), index=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    mime_type: Mapped[str] = mapped_column(String(255))
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    object_key: Mapped[str] = mapped_column(String(255))
+
+
 class ExternalSource(Base):
     __tablename__ = "external_sources"
 

@@ -122,3 +122,35 @@ class MediaOut(BaseModel):
     tags: str
     created_at: datetime
     updated_at: datetime
+
+
+class EmailMessageOut(BaseModel):
+    id: int
+    content_item_id: int
+    external_source_id: int
+    external_account_id: int
+    external_message_id: str
+    message_id_header: str | None
+    thread_id: str | None
+    subject: str
+    sender: str
+    recipients_to: str
+    recipients_cc: str
+    recipients_bcc: str
+    sent_at: datetime | None
+    received_at: datetime | None
+    folder: str
+    labels: str
+    has_attachments: bool
+    text_body: str
+    html_body: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class EmailAttachmentOut(BaseModel):
+    id: int
+    email_id: int
+    filename: str
+    mime_type: str
+    size_bytes: int

@@ -1,5 +1,14 @@
 # Changelog
 
+## Sprint 7
+
+- Added Email Mirroring Foundation as a specialised imported content type on the Unified Content Platform.
+- Added email message and attachment metadata persistence linked to imported `ContentItem` records.
+- Added fake/local email import adapter for deterministic tests without real credentials or external service connections.
+- Added email import, listing, lookup, search, attachment listing, and attachment download use cases.
+- Added `/email` API routes with owner scoping, duplicate external message handling, malformed payload validation, and audit logging.
+- Added email unit and API integration tests.
+
 ## Sprint 6
 
 - Added Media Library Foundation for image and video content on top of the Unified Content Platform.

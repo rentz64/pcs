@@ -4,6 +4,7 @@ from typing import BinaryIO, Protocol
 
 from .blog import BlogPost
 from .entities import AuditEntry, ContentItem, User
+from .email import EmailAttachment, EmailMessage
 from .imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob
 from .media import MediaItem
 
@@ -116,6 +117,32 @@ class MediaRepository(Protocol):
         ...
 
     def search_for_owner(self, owner_id: int, query: str) -> list[MediaItem]:
+        ...
+
+
+class EmailRepository(Protocol):
+    def add(self, message: EmailMessage) -> EmailMessage:
+        ...
+
+    def get_for_owner(self, email_id: int, owner_id: int) -> EmailMessage | None:
+        ...
+
+    def get_by_external_message_id(self, owner_id: int, account_id: int, external_message_id: str) -> EmailMessage | None:
+        ...
+
+    def list_for_owner(self, owner_id: int) -> list[EmailMessage]:
+        ...
+
+    def search_for_owner(self, owner_id: int, query: str) -> list[EmailMessage]:
+        ...
+
+    def add_attachment(self, attachment: EmailAttachment) -> EmailAttachment:
+        ...
+
+    def list_attachments_for_email(self, email_id: int, owner_id: int) -> list[EmailAttachment]:
+        ...
+
+    def get_attachment_for_owner(self, attachment_id: int, owner_id: int) -> EmailAttachment | None:
         ...
 
 

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.domain.blog import BlogPost, BlogStatus
 from app.domain.entities import AuditEntry, ContentItem, User
+from app.domain.email import EmailAttachment, EmailMessage
 from app.domain.imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob, ImportJobStatus
 from app.domain.media import MediaItem, MediaType
 from app.domain.repositories import SearchQuery
@@ -75,6 +76,44 @@ def _media(row: orm_models.MediaItem) -> MediaItem:
         duration_seconds=row.duration_seconds,
         created_at=row.created_at,
         updated_at=row.updated_at,
+    )
+
+
+def _email(row: orm_models.EmailMessage) -> EmailMessage:
+    return EmailMessage(
+        id=row.id,
+        owner_id=row.owner_id,
+        content_item=_content(row.content_item),
+        external_source_id=row.external_source_id,
+        external_account_id=row.external_account_id,
+        external_message_id=row.external_message_id,
+        message_id_header=row.message_id_header,
+        thread_id=row.thread_id,
+        subject=row.subject,
+        sender=row.sender,
+        recipients_to=row.recipients_to,
+        recipients_cc=row.recipients_cc,
+        recipients_bcc=row.recipients_bcc,
+        sent_at=row.sent_at,
+        received_at=row.received_at,
+        folder=row.folder,
+        labels=row.labels,
+        has_attachments=bool(row.has_attachments),
+        text_body=row.text_body,
+        html_body=row.html_body,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+def _email_attachment(row: orm_models.EmailAttachment) -> EmailAttachment:
+    return EmailAttachment(
+        id=row.id,
+        email_id=row.email_id,
+        filename=row.filename,
+        mime_type=row.mime_type,
+        size_bytes=row.size_bytes,
+        object_key=row.object_key,
     )
 
 
@@ -368,6 +407,112 @@ class SqlAlchemyMediaRepository:
         )
         return [_media(row) for row in rows]
 
+
+class SqlAlchemyEmailRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add(self, message: EmailMessage) -> EmailMessage:
+        row = orm_models.EmailMessage(
+            owner_id=message.owner_id,
+            content_item_id=message.content_item.id,
+            external_source_id=message.external_source_id,
+            external_account_id=message.external_account_id,
+            external_message_id=message.external_message_id,
+            message_id_header=message.message_id_header,
+            thread_id=message.thread_id,
+            subject=message.subject,
+            sender=message.sender,
+            recipients_to=message.recipients_to,
+            recipients_cc=message.recipients_cc,
+            recipients_bcc=message.recipients_bcc,
+            sent_at=message.sent_at,
+            received_at=message.received_at,
+            folder=message.folder,
+            labels=message.labels,
+            has_attachments=1 if message.has_attachments else 0,
+            text_body=message.text_body,
+            html_body=message.html_body,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _email(row)
+
+    def get_for_owner(self, email_id: int, owner_id: int) -> EmailMessage | None:
+        row = (
+            self.db.query(orm_models.EmailMessage)
+            .filter(orm_models.EmailMessage.id == email_id, orm_models.EmailMessage.owner_id == owner_id)
+            .first()
+        )
+        return _email(row) if row else None
+
+    def get_by_external_message_id(self, owner_id: int, account_id: int, external_message_id: str) -> EmailMessage | None:
+        row = (
+            self.db.query(orm_models.EmailMessage)
+            .filter(
+                orm_models.EmailMessage.owner_id == owner_id,
+                orm_models.EmailMessage.external_account_id == account_id,
+                orm_models.EmailMessage.external_message_id == external_message_id,
+            )
+            .first()
+        )
+        return _email(row) if row else None
+
+    def list_for_owner(self, owner_id: int) -> list[EmailMessage]:
+        rows = (
+            self.db.query(orm_models.EmailMessage)
+            .filter(orm_models.EmailMessage.owner_id == owner_id)
+            .order_by(orm_models.EmailMessage.received_at.desc(), orm_models.EmailMessage.created_at.desc())
+            .all()
+        )
+        return [_email(row) for row in rows]
+
+    def search_for_owner(self, owner_id: int, query: str) -> list[EmailMessage]:
+        pattern = f"%{query}%"
+        rows = (
+            self.db.query(orm_models.EmailMessage)
+            .filter(orm_models.EmailMessage.owner_id == owner_id)
+            .filter(
+                or_(
+                    orm_models.EmailMessage.subject.ilike(pattern),
+                    orm_models.EmailMessage.sender.ilike(pattern),
+                    orm_models.EmailMessage.text_body.ilike(pattern),
+                    orm_models.EmailMessage.labels.ilike(pattern),
+                )
+            )
+            .order_by(orm_models.EmailMessage.received_at.desc(), orm_models.EmailMessage.created_at.desc())
+            .all()
+        )
+        return [_email(row) for row in rows]
+
+    def add_attachment(self, attachment: EmailAttachment) -> EmailAttachment:
+        row = orm_models.EmailAttachment(
+            email_id=attachment.email_id,
+            filename=attachment.filename,
+            mime_type=attachment.mime_type,
+            size_bytes=attachment.size_bytes,
+            object_key=attachment.object_key,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _email_attachment(row)
+
+    def list_attachments_for_email(self, email_id: int, owner_id: int) -> list[EmailAttachment]:
+        if not self.get_for_owner(email_id, owner_id):
+            return []
+        rows = self.db.query(orm_models.EmailAttachment).filter(orm_models.EmailAttachment.email_id == email_id).all()
+        return [_email_attachment(row) for row in rows]
+
+    def get_attachment_for_owner(self, attachment_id: int, owner_id: int) -> EmailAttachment | None:
+        row = (
+            self.db.query(orm_models.EmailAttachment)
+            .join(orm_models.EmailMessage, orm_models.EmailAttachment.email_id == orm_models.EmailMessage.id)
+            .filter(orm_models.EmailAttachment.id == attachment_id, orm_models.EmailMessage.owner_id == owner_id)
+            .first()
+        )
+        return _email_attachment(row) if row else None
 
 class SqlAlchemyExternalSourceRepository:
     def __init__(self, db: Session):
