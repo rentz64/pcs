@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.domain.blog import BlogPost, BlogStatus
 from app.domain.entities import AuditEntry, ContentItem, User
 from app.domain.imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob, ImportJobStatus
+from app.domain.media import MediaItem, MediaType
 from app.domain.repositories import SearchQuery
 from app.infrastructure.db import orm_models
 
@@ -57,6 +58,23 @@ def _blog(row: orm_models.BlogPost) -> BlogPost:
         created_at=row.created_at,
         updated_at=row.updated_at,
         published_at=row.published_at,
+    )
+
+
+def _media(row: orm_models.MediaItem) -> MediaItem:
+    return MediaItem(
+        id=row.id,
+        owner_id=row.owner_id,
+        content_item=_content(row.content_item),
+        media_type=MediaType(row.media_type),
+        original_filename=row.original_filename,
+        mime_type=row.mime_type,
+        size_bytes=row.size_bytes,
+        width=row.width,
+        height=row.height,
+        duration_seconds=row.duration_seconds,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
     )
 
 
@@ -290,6 +308,65 @@ class SqlAlchemyBlogPostRepository:
             .all()
         )
         return [_blog(row) for row in rows]
+
+
+class SqlAlchemyMediaRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add(self, media: MediaItem) -> MediaItem:
+        row = orm_models.MediaItem(
+            owner_id=media.owner_id,
+            content_item_id=media.content_item.id,
+            media_type=media.media_type.value,
+            original_filename=media.original_filename,
+            mime_type=media.mime_type,
+            size_bytes=media.size_bytes,
+            width=media.width,
+            height=media.height,
+            duration_seconds=media.duration_seconds,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _media(row)
+
+    def get_for_owner(self, media_id: int, owner_id: int) -> MediaItem | None:
+        row = (
+            self.db.query(orm_models.MediaItem)
+            .filter(orm_models.MediaItem.id == media_id, orm_models.MediaItem.owner_id == owner_id)
+            .first()
+        )
+        return _media(row) if row else None
+
+    def list_for_owner(self, owner_id: int) -> list[MediaItem]:
+        rows = (
+            self.db.query(orm_models.MediaItem)
+            .filter(orm_models.MediaItem.owner_id == owner_id)
+            .order_by(orm_models.MediaItem.created_at.desc())
+            .all()
+        )
+        return [_media(row) for row in rows]
+
+    def search_for_owner(self, owner_id: int, query: str) -> list[MediaItem]:
+        pattern = f"%{query}%"
+        rows = (
+            self.db.query(orm_models.MediaItem)
+            .join(orm_models.ContentItem, orm_models.MediaItem.content_item_id == orm_models.ContentItem.id)
+            .filter(orm_models.MediaItem.owner_id == owner_id)
+            .filter(
+                or_(
+                    orm_models.ContentItem.title.ilike(pattern),
+                    orm_models.ContentItem.description.ilike(pattern),
+                    orm_models.MediaItem.original_filename.ilike(pattern),
+                    orm_models.ContentItem.tags.ilike(pattern),
+                    orm_models.MediaItem.mime_type.ilike(pattern),
+                )
+            )
+            .order_by(orm_models.MediaItem.created_at.desc())
+            .all()
+        )
+        return [_media(row) for row in rows]
 
 
 class SqlAlchemyExternalSourceRepository:

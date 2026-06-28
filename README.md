@@ -14,15 +14,16 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 6. Content library listing.
 7. Search by title, description, filename, tags, and content type.
 8. External import foundation with source/account registration, import jobs, and imported content provenance.
-9. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
-10. Audit logging for important actions.
-11. Test suite using pytest and FastAPI TestClient.
+9. Media library foundation for image and video uploads.
+10. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
+11. Audit logging for important actions.
+12. Test suite using pytest and FastAPI TestClient.
 
-Real Gmail, Google Drive, Maps, IMAP, OAuth, cloud integrations, media processing, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
+Real Gmail, Google Drive, Maps, IMAP, OAuth, cloud integrations, advanced media processing, AI classification, OCR, transcription, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content.
 
 ## Project structure
 
@@ -94,6 +95,17 @@ POST /blog/posts/{id}/unpublish
 
 Slugs are unique per owner. Draft posts may be incomplete, but publishing requires a non-empty body.
 
+## Media API
+
+Media items are implemented as specialised content backed by `ContentItem`, local object storage, and media-specific metadata. The foundation accepts common image and video MIME types and stores width, height, and duration metadata as nullable fields for future processing.
+
+```text
+POST /media
+GET /media
+GET /media/{media_id}
+GET /media/{media_id}/download
+```
+
 ## Installation
 
 Run commands from the repository root.
@@ -155,6 +167,7 @@ Change this before using the service with real data.
 6. Download with `GET /content/{content_id}/download`.
 7. Manage blog posts under `/blog/posts`.
 8. Register import sources/accounts and execute import jobs under `/imports`.
+9. Upload and download media under `/media`.
 
 ## Local storage layout
 

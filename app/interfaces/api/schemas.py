@@ -105,3 +105,20 @@ class ImportJobOut(BaseModel):
     error_message: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class MediaOut(BaseModel):
+    id: int
+    content_item_id: int
+    title: str
+    description: str | None
+    media_type: str
+    original_filename: str
+    mime_type: str
+    size_bytes: int
+    width: int | None
+    height: int | None
+    duration_seconds: float | None
+    tags: str
+    created_at: datetime
+    updated_at: datetime

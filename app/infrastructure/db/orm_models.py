@@ -66,6 +66,25 @@ class BlogPost(Base):
     content_item: Mapped[ContentItem] = relationship()
 
 
+class MediaItem(Base):
+    __tablename__ = "media_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    content_item_id: Mapped[int] = mapped_column(ForeignKey("content_items.id"), unique=True, index=True)
+    media_type: Mapped[str] = mapped_column(String(32), index=True)
+    original_filename: Mapped[str] = mapped_column(String(255))
+    mime_type: Mapped[str] = mapped_column(String(255), index=True)
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    width: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    height: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    duration_seconds: Mapped[float | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    content_item: Mapped[ContentItem] = relationship()
+
+
 class ExternalSource(Base):
     __tablename__ = "external_sources"
 

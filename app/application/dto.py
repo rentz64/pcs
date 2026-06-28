@@ -60,3 +60,13 @@ class CreateImportJobCommand:
     source_id: int
     account_id: int
     content_types: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class UploadMediaCommand:
+    title: str
+    description: str | None
+    tags: str
+    original_filename: str
+    mime_type: str
+    content: BinaryIO

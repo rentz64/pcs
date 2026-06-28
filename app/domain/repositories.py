@@ -5,6 +5,7 @@ from typing import BinaryIO, Protocol
 from .blog import BlogPost
 from .entities import AuditEntry, ContentItem, User
 from .imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob
+from .media import MediaItem
 
 
 @dataclass(frozen=True)
@@ -101,6 +102,20 @@ class ImportJobRepository(Protocol):
 
 class ImportBatchRepository(Protocol):
     def add(self, batch: ImportBatch) -> ImportBatch:
+        ...
+
+
+class MediaRepository(Protocol):
+    def add(self, media: MediaItem) -> MediaItem:
+        ...
+
+    def get_for_owner(self, media_id: int, owner_id: int) -> MediaItem | None:
+        ...
+
+    def list_for_owner(self, owner_id: int) -> list[MediaItem]:
+        ...
+
+    def search_for_owner(self, owner_id: int, query: str) -> list[MediaItem]:
         ...
 
 

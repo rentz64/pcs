@@ -14,6 +14,7 @@ from app.interfaces.api.routes_auth import router as auth_router
 from app.interfaces.api.routes_blog import router as blog_router
 from app.interfaces.api.routes_content import router as content_router
 from app.interfaces.api.routes_imports import router as imports_router
+from app.interfaces.api.routes_media import router as media_router
 
 
 def init_db() -> None:
@@ -51,6 +52,7 @@ app.include_router(auth_router)
 app.include_router(content_router)
 app.include_router(blog_router)
 app.include_router(imports_router)
+app.include_router(media_router)
 app.include_router(audit_router)
 
 _ = orm_models

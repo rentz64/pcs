@@ -49,3 +49,11 @@ class ImportJobNotFound(DomainError):
 class ImportAdapterNotFound(DomainError):
     pass
 
+
+class InvalidMediaType(DomainError):
+    pass
+
+
+class MediaItemNotFound(DomainError):
+    pass
+

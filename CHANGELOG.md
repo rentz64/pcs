@@ -1,5 +1,13 @@
 # Changelog
 
+## Sprint 6
+
+- Added Media Library Foundation for image and video content on top of the Unified Content Platform.
+- Added media metadata persistence linked to `ContentItem`.
+- Added media upload, metadata lookup, listing, search, and download use cases.
+- Added `/media` API routes with MIME validation, owner scoping, local object storage reuse, and audit logging.
+- Added media unit and API integration tests.
+
 ## Sprint 4
 
 - Added the External Import Foundation for the Unified Content Platform.

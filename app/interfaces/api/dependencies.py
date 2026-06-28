@@ -6,6 +6,7 @@ from app.application.auth_use_cases import AuthUseCases
 from app.application.blog_use_cases import BlogPostUseCases
 from app.application.content_use_cases import ContentUseCases
 from app.application.import_use_cases import ImportUseCases
+from app.application.media_use_cases import MediaUseCases
 from app.domain.entities import User
 from app.domain.errors import InvalidToken, UnknownUser
 from app.infrastructure.db.repositories import (
@@ -16,6 +17,7 @@ from app.infrastructure.db.repositories import (
     SqlAlchemyExternalSourceRepository,
     SqlAlchemyImportBatchRepository,
     SqlAlchemyImportJobRepository,
+    SqlAlchemyMediaRepository,
     SqlAlchemyUserRepository,
 )
 from app.infrastructure.imports.local_dummy import LocalDummyImportAdapter
@@ -46,6 +48,10 @@ def get_blog_post_repository(db: Session = Depends(get_db_session)) -> SqlAlchem
 
 def get_audit_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyAuditRepository:
     return SqlAlchemyAuditRepository(db)
+
+
+def get_media_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyMediaRepository:
+    return SqlAlchemyMediaRepository(db)
 
 
 def get_external_source_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyExternalSourceRepository:
@@ -117,6 +123,15 @@ def get_import_use_cases(
         audits,
         adapters={"local": LocalDummyImportAdapter()},
     )
+
+
+def get_media_use_cases(
+    media: SqlAlchemyMediaRepository = Depends(get_media_repository),
+    content: SqlAlchemyContentRepository = Depends(get_content_repository),
+    audits: SqlAlchemyAuditRepository = Depends(get_audit_repository),
+    object_storage: LocalObjectStorage = Depends(get_storage),
+) -> MediaUseCases:
+    return MediaUseCases(media, content, audits, object_storage)
 
 
 def current_user(
