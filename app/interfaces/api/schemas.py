@@ -28,7 +28,7 @@ class ContentOut(BaseModel):
 
 class BlogPostCreate(BaseModel):
     title: str
-    slug: str
+    slug: str | None = None
     body: str = ""
     summary: str | None = None
     tags: str = ""

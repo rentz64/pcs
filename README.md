@@ -92,7 +92,7 @@ POST /blog/posts/{id}/publish
 POST /blog/posts/{id}/unpublish
 ```
 
-Slugs are unique per owner. Draft posts may be incomplete, but publishing requires a non-empty body.
+Slugs are unique per owner. If a slug is omitted when creating a draft, PCS generates one from the title. Draft posts may be incomplete, but publishing requires a non-empty body. Blog create, update, publish, and unpublish actions are audit logged.
 
 ## Installation
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## Sprint 5
+
+- Completed Blog Management as the first specialised content type built on the Unified Content Platform.
+- Added generated slugs when a draft is created without an explicit slug.
+- Added audit events for blog post creation, update, publish, and unpublish.
+- Added regression tests for generated slugs and blog audit logging.
+
 ## Sprint 4
 
 - Added the External Import Foundation for the Unified Content Platform.

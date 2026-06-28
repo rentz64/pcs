@@ -7,9 +7,9 @@ import pytest
 from app.application.blog_use_cases import BlogPostUseCases
 from app.application.dto import CreateBlogPostCommand, UpdateBlogPostCommand
 from app.domain.blog import BlogPost, BlogStatus
-from app.domain.entities import ContentItem, User
+from app.domain.entities import AuditEntry, ContentItem, User
 from app.domain.errors import BlogPostNotFound, DuplicateSlug, InvalidBlogPost
-from tests.test_use_cases import FakeContent
+from tests.test_use_cases import FakeAudit, FakeContent
 
 
 class FakeBlogPosts:
@@ -74,6 +74,15 @@ def test_create_blog_draft_uses_content_item_foundation():
     assert content.items[0] == post.content_item
 
 
+def test_create_blog_draft_generates_slug_from_title_when_missing():
+    use_cases = BlogPostUseCases(FakeBlogPosts(), FakeContent())
+
+    post = use_cases.create_draft(owner(), CreateBlogPostCommand("Hello, PCS Blog!", "", "", None, "", ()))
+
+    assert post.slug == "hello-pcs-blog"
+    assert post.content_item.original_filename == "hello-pcs-blog.md"
+
+
 def test_blog_slug_must_be_unique_per_owner():
     use_cases = BlogPostUseCases(FakeBlogPosts(), FakeContent())
     use_cases.create_draft(owner(), CreateBlogPostCommand("First", "same", "", None, "", ()))
@@ -115,4 +124,21 @@ def test_blog_posts_are_scoped_to_owner():
 
     with pytest.raises(BlogPostNotFound):
         use_cases.get_by_id(owner(2), post.id)
+
+
+def test_blog_lifecycle_audits_create_update_publish_and_unpublish():
+    audit = FakeAudit()
+    use_cases = BlogPostUseCases(FakeBlogPosts(), FakeContent(), audit)
+    post = use_cases.create_draft(owner(), CreateBlogPostCommand("First", "first", "", None, "", ()))
+    updated = use_cases.update_draft(owner(), post.id, UpdateBlogPostCommand(body="Ready"))
+    published = use_cases.publish(owner(), updated.id)
+    use_cases.unpublish(owner(), published.id)
+
+    assert [entry.action for entry in audit.entries] == [
+        "blog_post_created",
+        "blog_post_updated",
+        "blog_post_published",
+        "blog_post_unpublished",
+    ]
+    assert all(entry.entity_type == "blog_post" for entry in audit.entries)
 

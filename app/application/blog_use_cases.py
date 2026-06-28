@@ -1,21 +1,24 @@
 from dataclasses import replace
 from datetime import datetime, timezone
+import re
 
 from app.application.dto import CreateBlogPostCommand, UpdateBlogPostCommand
 from app.domain.blog import BlogPost, BlogStatus
-from app.domain.entities import ContentItem, User
+from app.domain.entities import AuditEntry, ContentItem, User
 from app.domain.errors import BlogPostNotFound, DuplicateSlug, InvalidBlogPost
-from app.domain.repositories import BlogPostRepository, ContentRepository
+from app.domain.repositories import AuditRepository, BlogPostRepository, ContentRepository
 
 
 class BlogPostUseCases:
-    def __init__(self, blog_posts: BlogPostRepository, content: ContentRepository):
+    def __init__(self, blog_posts: BlogPostRepository, content: ContentRepository, audits: AuditRepository | None = None):
         self.blog_posts = blog_posts
         self.content = content
+        self.audits = audits
 
     def create_draft(self, user: User, command: CreateBlogPostCommand) -> BlogPost:
         self._validate_title(command.title)
-        self._validate_slug_available(user.id, command.slug)
+        slug = self._normalise_slug(command.slug, command.title)
+        self._validate_slug_available(user.id, slug)
         content_item = self.content.add(
             ContentItem(
                 id=None,
@@ -23,32 +26,34 @@ class BlogPostUseCases:
                 title=command.title,
                 description=command.summary,
                 content_type="blog_post",
-                original_filename=f"{command.slug}.md",
-                stored_filename=f"blog:{user.id}:{command.slug}",
+                original_filename=f"{slug}.md",
+                stored_filename=f"blog:{user.id}:{slug}",
                 mime_type="text/markdown",
                 size_bytes=len(command.body.encode("utf-8")),
                 tags=command.tags,
             )
         )
-        return self.blog_posts.add(
+        post = self.blog_posts.add(
             BlogPost(
                 id=None,
                 owner_id=user.id,
                 content_item=content_item,
-                slug=command.slug,
+                slug=slug,
                 body=command.body,
                 summary=command.summary,
                 status=BlogStatus.DRAFT,
                 tags=command.tags,
             )
         )
+        self._audit(user.id, "blog_post_created", post.id, post.slug)
+        return post
 
     def update_draft(self, user: User, post_id: int, command: UpdateBlogPostCommand) -> BlogPost:
         post = self._get_post(user, post_id)
         if post.status != BlogStatus.DRAFT:
             raise InvalidBlogPost("Published posts cannot be edited")
         title = command.title if command.title is not None else post.title
-        slug = command.slug if command.slug is not None else post.slug
+        slug = self._normalise_slug(command.slug, title) if command.slug is not None else post.slug
         body = command.body if command.body is not None else post.body
         summary = command.summary if command.summary is not None else post.summary
         tags = command.tags if command.tags is not None else post.tags
@@ -64,7 +69,7 @@ class BlogPostUseCases:
             size_bytes=len(body.encode("utf-8")),
             tags=tags,
         )
-        return self.blog_posts.update(
+        updated = self.blog_posts.update(
             replace(
                 post,
                 content_item=content_item,
@@ -75,12 +80,14 @@ class BlogPostUseCases:
                 updated_at=datetime.now(timezone.utc),
             )
         )
+        self._audit(user.id, "blog_post_updated", updated.id, updated.slug)
+        return updated
 
     def publish(self, user: User, post_id: int) -> BlogPost:
         post = self._get_post(user, post_id)
         if not post.body.strip():
             raise InvalidBlogPost("Body is required for publishing")
-        return self.blog_posts.update(
+        updated = self.blog_posts.update(
             replace(
                 post,
                 status=BlogStatus.PUBLISHED,
@@ -88,12 +95,16 @@ class BlogPostUseCases:
                 updated_at=datetime.now(timezone.utc),
             )
         )
+        self._audit(user.id, "blog_post_published", updated.id, updated.slug)
+        return updated
 
     def unpublish(self, user: User, post_id: int) -> BlogPost:
         post = self._get_post(user, post_id)
-        return self.blog_posts.update(
+        updated = self.blog_posts.update(
             replace(post, status=BlogStatus.DRAFT, published_at=None, updated_at=datetime.now(timezone.utc))
         )
+        self._audit(user.id, "blog_post_unpublished", updated.id, updated.slug)
+        return updated
 
     def get_by_id(self, user: User, post_id: int) -> BlogPost:
         return self._get_post(user, post_id)
@@ -120,8 +131,28 @@ class BlogPostUseCases:
         if not title.strip():
             raise InvalidBlogPost("Title is required")
 
-    def _validate_slug_available(self, owner_id: int, slug: str) -> None:
-        if not slug.strip():
+    def _normalise_slug(self, slug: str | None, title: str) -> str:
+        candidate = slug.strip() if slug else ""
+        if not candidate:
+            candidate = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+        if not candidate:
             raise InvalidBlogPost("Slug is required")
+        return candidate
+
+    def _validate_slug_available(self, owner_id: int, slug: str) -> None:
         if self.blog_posts.get_by_slug_for_owner(slug, owner_id):
             raise DuplicateSlug()
+
+    def _audit(self, user_id: int | None, action: str, post_id: int | None, details: str | None) -> None:
+        if not self.audits:
+            return
+        self.audits.add(
+            AuditEntry(
+                id=None,
+                user_id=user_id,
+                action=action,
+                entity_type="blog_post",
+                entity_id=str(post_id) if post_id is not None else None,
+                details=details,
+            )
+        )

@@ -1,4 +1,4 @@
-from app.infrastructure.db.orm_models import User
+from app.infrastructure.db.orm_models import AuditLog, User
 from app.infrastructure.security.password import hash_password
 from app.interfaces.api.dependencies import get_db_session
 
@@ -57,6 +57,26 @@ def test_blog_post_draft_publish_unpublish_flow(client, auth_headers):
     assert unpublish.status_code == 200
     assert unpublish.json()["status"] == "draft"
     assert unpublish.json()["published_at"] is None
+
+    from app.main import app
+
+    db_gen = app.dependency_overrides[get_db_session]()
+    db = next(db_gen)
+    try:
+        actions = [row.action for row in db.query(AuditLog).order_by(AuditLog.id).all()]
+    finally:
+        db_gen.close()
+    assert "blog_post_created" in actions
+    assert "blog_post_updated" in actions
+    assert "blog_post_published" in actions
+    assert "blog_post_unpublished" in actions
+
+
+def test_blog_post_slug_is_generated_when_omitted(client, auth_headers):
+    response = client.post("/blog/posts", headers=auth_headers, json={"title": "Hello, PCS Blog!"})
+
+    assert response.status_code == 200
+    assert response.json()["slug"] == "hello-pcs-blog"
 
 
 def test_blog_slug_lookup_listing_search_and_uniqueness(client, auth_headers):

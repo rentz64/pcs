@@ -25,7 +25,7 @@ class DownloadContent:
 @dataclass(frozen=True)
 class CreateBlogPostCommand:
     title: str
-    slug: str
+    slug: str | None = None
     body: str = ""
     summary: str | None = None
     tags: str = ""

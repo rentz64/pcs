@@ -96,8 +96,9 @@ def get_content_use_cases(
 def get_blog_post_use_cases(
     blog_posts: SqlAlchemyBlogPostRepository = Depends(get_blog_post_repository),
     content: SqlAlchemyContentRepository = Depends(get_content_repository),
+    audits: SqlAlchemyAuditRepository = Depends(get_audit_repository),
 ) -> BlogPostUseCases:
-    return BlogPostUseCases(blog_posts, content)
+    return BlogPostUseCases(blog_posts, content, audits)
 
 
 def get_import_use_cases(
