@@ -8,6 +8,7 @@ from app.application.content_use_cases import ContentUseCases
 from app.application.import_use_cases import ImportUseCases
 from app.application.email_use_cases import EmailUseCases
 from app.application.media_use_cases import MediaUseCases
+from app.application.travel_use_cases import TravelUseCases
 from app.domain.entities import User
 from app.domain.errors import InvalidToken, UnknownUser
 from app.infrastructure.db.repositories import (
@@ -20,6 +21,7 @@ from app.infrastructure.db.repositories import (
     SqlAlchemyImportBatchRepository,
     SqlAlchemyImportJobRepository,
     SqlAlchemyMediaRepository,
+    SqlAlchemyTravelRepository,
     SqlAlchemyUserRepository,
 )
 from app.infrastructure.imports.local_dummy import LocalDummyImportAdapter
@@ -59,6 +61,10 @@ def get_media_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyMed
 
 def get_email_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyEmailRepository:
     return SqlAlchemyEmailRepository(db)
+
+
+def get_travel_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyTravelRepository:
+    return SqlAlchemyTravelRepository(db)
 
 
 def get_external_source_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyExternalSourceRepository:
@@ -148,6 +154,14 @@ def get_email_use_cases(
     object_storage: LocalObjectStorage = Depends(get_storage),
 ) -> EmailUseCases:
     return EmailUseCases(emails, content, audits, object_storage)
+
+
+def get_travel_use_cases(
+    travel: SqlAlchemyTravelRepository = Depends(get_travel_repository),
+    content: SqlAlchemyContentRepository = Depends(get_content_repository),
+    audits: SqlAlchemyAuditRepository = Depends(get_audit_repository),
+) -> TravelUseCases:
+    return TravelUseCases(travel, content, audits)
 
 
 def get_fake_email_adapter() -> FakeEmailImportAdapter:

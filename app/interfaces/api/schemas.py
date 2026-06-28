@@ -154,3 +154,97 @@ class EmailAttachmentOut(BaseModel):
     filename: str
     mime_type: str
     size_bytes: int
+
+
+class TravelItineraryCreate(BaseModel):
+    title: str
+    description: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    status: str = "draft"
+
+
+class TravelItineraryUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    status: str | None = None
+
+
+class TravelPlaceCreate(BaseModel):
+    name: str
+    description: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    visit_start: str | None = None
+    visit_end: str | None = None
+    sequence_order: int = 0
+
+
+class TravelPlaceUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    visit_start: str | None = None
+    visit_end: str | None = None
+    sequence_order: int | None = None
+
+
+class TravelRouteCreate(BaseModel):
+    origin_place_id: int
+    destination_place_id: int
+    transport_mode: str
+    distance_meters: int | None = None
+    duration_seconds: int | None = None
+    sequence_order: int = 0
+
+
+class TravelRouteUpdate(BaseModel):
+    origin_place_id: int | None = None
+    destination_place_id: int | None = None
+    transport_mode: str | None = None
+    distance_meters: int | None = None
+    duration_seconds: int | None = None
+    sequence_order: int | None = None
+
+
+class TravelPlaceOut(BaseModel):
+    id: int
+    itinerary_id: int
+    name: str
+    description: str | None
+    address: str | None
+    latitude: float | None
+    longitude: float | None
+    visit_start: datetime | None
+    visit_end: datetime | None
+    sequence_order: int
+
+
+class TravelRouteOut(BaseModel):
+    id: int
+    itinerary_id: int
+    origin_place_id: int
+    destination_place_id: int
+    transport_mode: str
+    distance_meters: int | None
+    duration_seconds: int | None
+    sequence_order: int
+
+
+class TravelItineraryOut(BaseModel):
+    id: int
+    content_item_id: int
+    title: str
+    description: str | None
+    start_date: str | None
+    end_date: str | None
+    status: str
+    places: list[TravelPlaceOut] = []
+    routes: list[TravelRouteOut] = []
+    created_at: datetime
+    updated_at: datetime

@@ -17,14 +17,15 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 9. Media library foundation for image and video uploads.
 10. Email mirroring foundation using a fake/local adapter.
 11. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
-12. Audit logging for important actions.
-13. Test suite using pytest and FastAPI TestClient.
+12. Travel itinerary foundation with places and routes.
+13. Audit logging for important actions.
+14. Test suite using pytest and FastAPI TestClient.
 
-Real Gmail OAuth, live email service connections, sending email, two-way mailbox sync, Google Drive, Maps, IMAP, OAuth integrations, cloud integrations, advanced media processing, AI classification, OCR, transcription, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
+Real Gmail OAuth, live email service connections, sending email, two-way mailbox sync, Google Drive, Maps, IMAP, OAuth integrations, cloud integrations, real map services, live geocoding, route optimisation, advanced media processing, AI classification, OCR, transcription, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter. Sprint 8 adds travel itineraries, places, and routes as specialised content without live map integrations.
 
 ## Project structure
 
@@ -119,6 +120,23 @@ GET /email/messages/{email_id}/attachments
 GET /email/attachments/{attachment_id}/download
 ```
 
+## Travel API
+
+Travel itineraries are implemented as specialised content backed by `ContentItem` plus itinerary, place, and route metadata. Sprint 8 stores user-provided coordinates and route placeholders only; it does not call map services, geocode addresses, or optimise routes.
+
+```text
+POST /travel/itineraries
+GET /travel/itineraries
+GET /travel/itineraries/{itinerary_id}
+PUT /travel/itineraries/{itinerary_id}
+POST /travel/itineraries/{itinerary_id}/places
+PUT /travel/places/{place_id}
+DELETE /travel/places/{place_id}
+POST /travel/itineraries/{itinerary_id}/routes
+PUT /travel/routes/{route_id}
+DELETE /travel/routes/{route_id}
+```
+
 ## Installation
 
 Run commands from the repository root.
@@ -182,6 +200,7 @@ Change this before using the service with real data.
 8. Register import sources/accounts and execute import jobs under `/imports`.
 9. Upload and download media under `/media`.
 10. Import and browse fake mirrored email under `/email`.
+11. Manage travel itineraries, places, and routes under `/travel`.
 
 ## Local storage layout
 

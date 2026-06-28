@@ -70,3 +70,65 @@ class UploadMediaCommand:
     original_filename: str
     mime_type: str
     content: BinaryIO
+
+
+@dataclass(frozen=True)
+class CreateTravelItineraryCommand:
+    title: str
+    description: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    status: str = "draft"
+
+
+@dataclass(frozen=True)
+class UpdateTravelItineraryCommand:
+    title: str | None = None
+    description: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    status: str | None = None
+
+
+@dataclass(frozen=True)
+class AddTravelPlaceCommand:
+    name: str
+    description: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    visit_start: str | None = None
+    visit_end: str | None = None
+    sequence_order: int = 0
+
+
+@dataclass(frozen=True)
+class UpdateTravelPlaceCommand:
+    name: str | None = None
+    description: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    visit_start: str | None = None
+    visit_end: str | None = None
+    sequence_order: int | None = None
+
+
+@dataclass(frozen=True)
+class AddTravelRouteCommand:
+    origin_place_id: int
+    destination_place_id: int
+    transport_mode: str
+    distance_meters: int | None = None
+    duration_seconds: int | None = None
+    sequence_order: int = 0
+
+
+@dataclass(frozen=True)
+class UpdateTravelRouteCommand:
+    origin_place_id: int | None = None
+    destination_place_id: int | None = None
+    transport_mode: str | None = None
+    distance_meters: int | None = None
+    duration_seconds: int | None = None
+    sequence_order: int | None = None

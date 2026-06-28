@@ -7,6 +7,7 @@ from .entities import AuditEntry, ContentItem, User
 from .email import EmailAttachment, EmailMessage
 from .imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob
 from .media import MediaItem
+from .travel import TravelItinerary, TravelPlace, TravelRoute
 
 
 @dataclass(frozen=True)
@@ -143,6 +144,53 @@ class EmailRepository(Protocol):
         ...
 
     def get_attachment_for_owner(self, attachment_id: int, owner_id: int) -> EmailAttachment | None:
+        ...
+
+
+class TravelRepository(Protocol):
+    def add_itinerary(self, itinerary: TravelItinerary) -> TravelItinerary:
+        ...
+
+    def update_itinerary(self, itinerary: TravelItinerary) -> TravelItinerary:
+        ...
+
+    def get_itinerary_for_owner(self, itinerary_id: int, owner_id: int) -> TravelItinerary | None:
+        ...
+
+    def list_itineraries_for_owner(self, owner_id: int) -> list[TravelItinerary]:
+        ...
+
+    def search_itineraries_for_owner(self, owner_id: int, query: str) -> list[TravelItinerary]:
+        ...
+
+    def add_place(self, place: TravelPlace) -> TravelPlace:
+        ...
+
+    def update_place(self, place: TravelPlace) -> TravelPlace:
+        ...
+
+    def remove_place(self, place_id: int) -> None:
+        ...
+
+    def get_place_for_owner(self, place_id: int, owner_id: int) -> TravelPlace | None:
+        ...
+
+    def list_places_for_itinerary(self, itinerary_id: int) -> list[TravelPlace]:
+        ...
+
+    def add_route(self, route: TravelRoute) -> TravelRoute:
+        ...
+
+    def update_route(self, route: TravelRoute) -> TravelRoute:
+        ...
+
+    def remove_route(self, route_id: int) -> None:
+        ...
+
+    def get_route_for_owner(self, route_id: int, owner_id: int) -> TravelRoute | None:
+        ...
+
+    def list_routes_for_itinerary(self, itinerary_id: int) -> list[TravelRoute]:
         ...
 
 

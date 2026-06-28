@@ -7,6 +7,7 @@ from app.domain.email import EmailAttachment, EmailMessage
 from app.domain.imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob, ImportJobStatus
 from app.domain.media import MediaItem, MediaType
 from app.domain.repositories import SearchQuery
+from app.domain.travel import ItineraryStatus, TravelItinerary, TravelPlace, TravelRoute
 from app.infrastructure.db import orm_models
 
 
@@ -114,6 +115,49 @@ def _email_attachment(row: orm_models.EmailAttachment) -> EmailAttachment:
         mime_type=row.mime_type,
         size_bytes=row.size_bytes,
         object_key=row.object_key,
+    )
+
+
+def _travel_place(row: orm_models.TravelPlace) -> TravelPlace:
+    return TravelPlace(
+        id=row.id,
+        itinerary_id=row.itinerary_id,
+        name=row.name,
+        description=row.description,
+        address=row.address,
+        latitude=row.latitude,
+        longitude=row.longitude,
+        visit_start=row.visit_start,
+        visit_end=row.visit_end,
+        sequence_order=row.sequence_order,
+    )
+
+
+def _travel_route(row: orm_models.TravelRoute) -> TravelRoute:
+    return TravelRoute(
+        id=row.id,
+        itinerary_id=row.itinerary_id,
+        origin_place_id=row.origin_place_id,
+        destination_place_id=row.destination_place_id,
+        transport_mode=row.transport_mode,
+        distance_meters=row.distance_meters,
+        duration_seconds=row.duration_seconds,
+        sequence_order=row.sequence_order,
+    )
+
+
+def _travel_itinerary(row: orm_models.TravelItinerary) -> TravelItinerary:
+    return TravelItinerary(
+        id=row.id,
+        owner_id=row.owner_id,
+        content_item=_content(row.content_item),
+        title=row.title,
+        description=row.description,
+        start_date=row.start_date,
+        end_date=row.end_date,
+        status=ItineraryStatus(row.status),
+        created_at=row.created_at,
+        updated_at=row.updated_at,
     )
 
 
@@ -513,6 +557,187 @@ class SqlAlchemyEmailRepository:
             .first()
         )
         return _email_attachment(row) if row else None
+
+
+class SqlAlchemyTravelRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add_itinerary(self, itinerary: TravelItinerary) -> TravelItinerary:
+        row = orm_models.TravelItinerary(
+            owner_id=itinerary.owner_id,
+            content_item_id=itinerary.content_item.id,
+            title=itinerary.title,
+            description=itinerary.description,
+            start_date=itinerary.start_date,
+            end_date=itinerary.end_date,
+            status=itinerary.status.value,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _travel_itinerary(row)
+
+    def update_itinerary(self, itinerary: TravelItinerary) -> TravelItinerary:
+        row = self.db.query(orm_models.TravelItinerary).filter(orm_models.TravelItinerary.id == itinerary.id).first()
+        if row is None:
+            raise ValueError("Travel itinerary not found")
+        row.title = itinerary.title
+        row.description = itinerary.description
+        row.start_date = itinerary.start_date
+        row.end_date = itinerary.end_date
+        row.status = itinerary.status.value
+        row.updated_at = orm_models.now_utc()
+        row.content_item.title = itinerary.title
+        row.content_item.description = itinerary.description
+        row.content_item.updated_at = orm_models.now_utc()
+        self.db.commit()
+        self.db.refresh(row)
+        return _travel_itinerary(row)
+
+    def get_itinerary_for_owner(self, itinerary_id: int, owner_id: int) -> TravelItinerary | None:
+        row = (
+            self.db.query(orm_models.TravelItinerary)
+            .filter(orm_models.TravelItinerary.id == itinerary_id, orm_models.TravelItinerary.owner_id == owner_id)
+            .first()
+        )
+        return _travel_itinerary(row) if row else None
+
+    def list_itineraries_for_owner(self, owner_id: int) -> list[TravelItinerary]:
+        rows = (
+            self.db.query(orm_models.TravelItinerary)
+            .filter(orm_models.TravelItinerary.owner_id == owner_id)
+            .order_by(orm_models.TravelItinerary.created_at.desc())
+            .all()
+        )
+        return [_travel_itinerary(row) for row in rows]
+
+    def search_itineraries_for_owner(self, owner_id: int, query: str) -> list[TravelItinerary]:
+        pattern = f"%{query}%"
+        rows = (
+            self.db.query(orm_models.TravelItinerary)
+            .filter(orm_models.TravelItinerary.owner_id == owner_id)
+            .filter(
+                or_(
+                    orm_models.TravelItinerary.title.ilike(pattern),
+                    orm_models.TravelItinerary.description.ilike(pattern),
+                )
+            )
+            .order_by(orm_models.TravelItinerary.created_at.desc())
+            .all()
+        )
+        return [_travel_itinerary(row) for row in rows]
+
+    def add_place(self, place: TravelPlace) -> TravelPlace:
+        row = orm_models.TravelPlace(
+            itinerary_id=place.itinerary_id,
+            name=place.name,
+            description=place.description,
+            address=place.address,
+            latitude=place.latitude,
+            longitude=place.longitude,
+            visit_start=place.visit_start,
+            visit_end=place.visit_end,
+            sequence_order=place.sequence_order,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _travel_place(row)
+
+    def update_place(self, place: TravelPlace) -> TravelPlace:
+        row = self.db.query(orm_models.TravelPlace).filter(orm_models.TravelPlace.id == place.id).first()
+        if row is None:
+            raise ValueError("Travel place not found")
+        row.name = place.name
+        row.description = place.description
+        row.address = place.address
+        row.latitude = place.latitude
+        row.longitude = place.longitude
+        row.visit_start = place.visit_start
+        row.visit_end = place.visit_end
+        row.sequence_order = place.sequence_order
+        self.db.commit()
+        self.db.refresh(row)
+        return _travel_place(row)
+
+    def remove_place(self, place_id: int) -> None:
+        row = self.db.query(orm_models.TravelPlace).filter(orm_models.TravelPlace.id == place_id).first()
+        if row is not None:
+            self.db.delete(row)
+            self.db.commit()
+
+    def get_place_for_owner(self, place_id: int, owner_id: int) -> TravelPlace | None:
+        row = (
+            self.db.query(orm_models.TravelPlace)
+            .join(orm_models.TravelItinerary, orm_models.TravelPlace.itinerary_id == orm_models.TravelItinerary.id)
+            .filter(orm_models.TravelPlace.id == place_id, orm_models.TravelItinerary.owner_id == owner_id)
+            .first()
+        )
+        return _travel_place(row) if row else None
+
+    def list_places_for_itinerary(self, itinerary_id: int) -> list[TravelPlace]:
+        rows = (
+            self.db.query(orm_models.TravelPlace)
+            .filter(orm_models.TravelPlace.itinerary_id == itinerary_id)
+            .order_by(orm_models.TravelPlace.sequence_order.asc(), orm_models.TravelPlace.id.asc())
+            .all()
+        )
+        return [_travel_place(row) for row in rows]
+
+    def add_route(self, route: TravelRoute) -> TravelRoute:
+        row = orm_models.TravelRoute(
+            itinerary_id=route.itinerary_id,
+            origin_place_id=route.origin_place_id,
+            destination_place_id=route.destination_place_id,
+            transport_mode=route.transport_mode,
+            distance_meters=route.distance_meters,
+            duration_seconds=route.duration_seconds,
+            sequence_order=route.sequence_order,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _travel_route(row)
+
+    def update_route(self, route: TravelRoute) -> TravelRoute:
+        row = self.db.query(orm_models.TravelRoute).filter(orm_models.TravelRoute.id == route.id).first()
+        if row is None:
+            raise ValueError("Travel route not found")
+        row.origin_place_id = route.origin_place_id
+        row.destination_place_id = route.destination_place_id
+        row.transport_mode = route.transport_mode
+        row.distance_meters = route.distance_meters
+        row.duration_seconds = route.duration_seconds
+        row.sequence_order = route.sequence_order
+        self.db.commit()
+        self.db.refresh(row)
+        return _travel_route(row)
+
+    def remove_route(self, route_id: int) -> None:
+        row = self.db.query(orm_models.TravelRoute).filter(orm_models.TravelRoute.id == route_id).first()
+        if row is not None:
+            self.db.delete(row)
+            self.db.commit()
+
+    def get_route_for_owner(self, route_id: int, owner_id: int) -> TravelRoute | None:
+        row = (
+            self.db.query(orm_models.TravelRoute)
+            .join(orm_models.TravelItinerary, orm_models.TravelRoute.itinerary_id == orm_models.TravelItinerary.id)
+            .filter(orm_models.TravelRoute.id == route_id, orm_models.TravelItinerary.owner_id == owner_id)
+            .first()
+        )
+        return _travel_route(row) if row else None
+
+    def list_routes_for_itinerary(self, itinerary_id: int) -> list[TravelRoute]:
+        rows = (
+            self.db.query(orm_models.TravelRoute)
+            .filter(orm_models.TravelRoute.itinerary_id == itinerary_id)
+            .order_by(orm_models.TravelRoute.sequence_order.asc(), orm_models.TravelRoute.id.asc())
+            .all()
+        )
+        return [_travel_route(row) for row in rows]
+
 
 class SqlAlchemyExternalSourceRepository:
     def __init__(self, db: Session):

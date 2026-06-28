@@ -1,5 +1,14 @@
 # Changelog
 
+## Sprint 8
+
+- Added Travel Itinerary Foundation as a specialised content type on the Unified Content Platform.
+- Added itinerary, place, and route domain models, use cases, repository ports, and SQLite persistence.
+- Added `/travel` API routes for itinerary, place, and route lifecycle operations with owner scoping and validation.
+- Added GeoJSON, GPX, and KML import/export placeholder use cases without parsers or external map services.
+- Added audit logging for itinerary, place, and route changes.
+- Added travel unit and API integration tests.
+
 ## Sprint 7
 
 - Added Email Mirroring Foundation as a specialised imported content type on the Unified Content Platform.

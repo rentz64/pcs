@@ -69,3 +69,27 @@ class EmailAttachmentNotFound(DomainError):
 class InvalidEmailPayload(DomainError):
     pass
 
+
+class TravelItineraryNotFound(DomainError):
+    pass
+
+
+class TravelPlaceNotFound(DomainError):
+    pass
+
+
+class TravelRouteNotFound(DomainError):
+    pass
+
+
+class InvalidTravelItinerary(DomainError):
+    pass
+
+
+class InvalidTravelPlace(DomainError):
+    pass
+
+
+class InvalidTravelRoute(DomainError):
+    pass
+

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.db.session import Base
 
@@ -124,6 +124,51 @@ class EmailAttachment(Base):
     mime_type: Mapped[str] = mapped_column(String(255))
     size_bytes: Mapped[int] = mapped_column(Integer)
     object_key: Mapped[str] = mapped_column(String(255))
+
+
+class TravelItinerary(Base):
+    __tablename__ = "travel_itineraries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    content_item_id: Mapped[int] = mapped_column(ForeignKey("content_items.id"), unique=True, index=True)
+    title: Mapped[str] = mapped_column(String(255), index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    start_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    end_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="draft", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+    content_item: Mapped[ContentItem] = relationship()
+
+
+class TravelPlace(Base):
+    __tablename__ = "travel_places"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    itinerary_id: Mapped[int] = mapped_column(ForeignKey("travel_itineraries.id"), index=True)
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    visit_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    visit_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sequence_order: Mapped[int] = mapped_column(Integer, default=0, index=True)
+
+
+class TravelRoute(Base):
+    __tablename__ = "travel_routes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    itinerary_id: Mapped[int] = mapped_column(ForeignKey("travel_itineraries.id"), index=True)
+    origin_place_id: Mapped[int] = mapped_column(ForeignKey("travel_places.id"), index=True)
+    destination_place_id: Mapped[int] = mapped_column(ForeignKey("travel_places.id"), index=True)
+    transport_mode: Mapped[str] = mapped_column(String(64))
+    distance_meters: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sequence_order: Mapped[int] = mapped_column(Integer, default=0, index=True)
 
 
 class ExternalSource(Base):

@@ -16,6 +16,7 @@ from app.interfaces.api.routes_content import router as content_router
 from app.interfaces.api.routes_email import router as email_router
 from app.interfaces.api.routes_imports import router as imports_router
 from app.interfaces.api.routes_media import router as media_router
+from app.interfaces.api.routes_travel import router as travel_router
 
 
 def init_db() -> None:
@@ -55,6 +56,7 @@ app.include_router(blog_router)
 app.include_router(imports_router)
 app.include_router(media_router)
 app.include_router(email_router)
+app.include_router(travel_router)
 app.include_router(audit_router)
 
 _ = orm_models
