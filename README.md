@@ -20,7 +20,7 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 12. Email mirroring foundation using a fake/local adapter.
 13. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
 14. Travel itinerary foundation with places and routes.
-15. Background job domain/use-case foundation without a real async scheduler.
+15. Executable background task engine with manual local job execution.
 16. Internal in-process application event publisher separate from audit logging.
 17. Audit logging for important actions.
 18. Test suite using pytest and FastAPI TestClient.
@@ -29,7 +29,7 @@ Real Gmail OAuth, live email service connections, sending email, two-way mailbox
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter. Sprint 8 adds travel itineraries, places, and routes as specialised content without live map integrations. Sprint 9 adds application infrastructure for configuration, health/status, background jobs, internal events, and cleaner OpenAPI discovery before UI work begins.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter. Sprint 8 adds travel itineraries, places, and routes as specialised content without live map integrations. Sprint 9 adds application infrastructure for configuration, health/status, background jobs, internal events, and cleaner OpenAPI discovery before UI work begins. Sprint 10 turns the job foundation into a manual local task execution engine without external schedulers.
 
 ## Project structure
 
@@ -154,7 +154,36 @@ These endpoints report the API version, SQLite status, local object storage stat
 
 ## Background jobs and events
 
-Sprint 9 introduces a generic `Job` domain model with queued, running, succeeded, failed, and cancelled states plus job repository/use-case ports. The current implementation is a foundation only; it stores jobs in SQLite and does not run a real async scheduler.
+Sprint 9 introduced a generic `Job` domain model with queued, running, succeeded, failed, and cancelled states plus job repository/use-case ports. Sprint 10 adds executable tasks with:
+
+- `TaskDefinition`
+- `TaskHandler`
+- `TaskRegistry`
+- `TaskExecutionContext`
+- `TaskExecutionResult`
+
+Jobs now store task type, JSON payload/result data, error messages, attempts, retry limits, and queued/started/completed timestamps. Execution is still local and manual; PCS does not run an external scheduler or worker service.
+
+Built-in local task handlers:
+
+```text
+system.noop
+system.fail
+content.reindex
+imports.placeholder
+```
+
+Task/job API:
+
+```text
+POST /system/jobs
+GET /system/jobs
+GET /system/jobs/{job_id}
+POST /system/jobs/{job_id}/execute
+POST /system/jobs/execute-next
+POST /system/jobs/{job_id}/retry
+POST /system/jobs/{job_id}/cancel
+```
 
 Internal `ApplicationEvent` publishing is handled by a simple in-process publisher. Audit logging remains a separate user/action record and is not replaced by internal events.
 

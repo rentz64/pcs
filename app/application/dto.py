@@ -69,6 +69,13 @@ class CreateJobCommand:
 
 
 @dataclass(frozen=True)
+class EnqueueTaskCommand:
+    task_type: str
+    payload: dict[str, object] | None = None
+    max_attempts: int = 1
+
+
+@dataclass(frozen=True)
 class UploadMediaCommand:
     title: str
     description: str | None

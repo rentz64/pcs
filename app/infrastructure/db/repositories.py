@@ -225,13 +225,23 @@ def _import_batch(row: orm_models.ImportBatch) -> ImportBatch:
 
 
 def _job(row: orm_models.Job) -> Job:
+    payload_json = json.loads(row.payload_json or "{}")
+    result_json = json.loads(row.result_json) if row.result_json else None
     return Job(
         id=row.id,
         name=row.name,
         status=JobStatus(row.status),
-        payload=json.loads(row.payload),
-        result=row.result,
+        task_type=row.task_type,
+        payload_json=payload_json,
+        result_json=result_json,
         error_message=row.error_message,
+        attempts=row.attempts,
+        max_attempts=row.max_attempts,
+        queued_at=row.queued_at,
+        started_at=row.started_at,
+        completed_at=row.completed_at,
+        payload={str(key): str(value) for key, value in payload_json.items()},
+        result=row.result,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
@@ -893,9 +903,16 @@ class SqlAlchemyJobRepository:
         row = orm_models.Job(
             name=job.name,
             status=job.status.value,
-            payload=json.dumps(job.payload, sort_keys=True),
+            task_type=job.task_type,
+            payload_json=json.dumps(job.payload_json, sort_keys=True),
+            result_json=json.dumps(job.result_json, sort_keys=True) if job.result_json is not None else None,
             result=job.result,
             error_message=job.error_message,
+            attempts=job.attempts,
+            max_attempts=job.max_attempts,
+            queued_at=job.queued_at,
+            started_at=job.started_at,
+            completed_at=job.completed_at,
         )
         self.db.add(row)
         self.db.commit()
@@ -907,9 +924,16 @@ class SqlAlchemyJobRepository:
         if row is None:
             raise ValueError("Job not found")
         row.status = job.status.value
-        row.payload = json.dumps(job.payload, sort_keys=True)
+        row.task_type = job.task_type
+        row.payload_json = json.dumps(job.payload_json, sort_keys=True)
+        row.result_json = json.dumps(job.result_json, sort_keys=True) if job.result_json is not None else None
         row.result = job.result
         row.error_message = job.error_message
+        row.attempts = job.attempts
+        row.max_attempts = job.max_attempts
+        row.queued_at = job.queued_at
+        row.started_at = job.started_at
+        row.completed_at = job.completed_at
         row.updated_at = orm_models.now_utc()
         self.db.commit()
         self.db.refresh(row)
@@ -921,6 +945,15 @@ class SqlAlchemyJobRepository:
 
     def get(self, job_id: int) -> Job | None:
         row = self.db.query(orm_models.Job).filter(orm_models.Job.id == job_id).first()
+        return _job(row) if row else None
+
+    def next_queued(self) -> Job | None:
+        row = (
+            self.db.query(orm_models.Job)
+            .filter(orm_models.Job.status == JobStatus.QUEUED.value)
+            .order_by(orm_models.Job.queued_at.asc(), orm_models.Job.id.asc())
+            .first()
+        )
         return _job(row) if row else None
 
     def count_by_status(self) -> dict[JobStatus, int]:

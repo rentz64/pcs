@@ -27,6 +27,7 @@ from app.infrastructure.db.repositories import (
     SqlAlchemyUserRepository,
 )
 from app.infrastructure.events import InProcessEventPublisher
+from app.domain.tasks import TaskRegistry, build_default_task_registry
 from app.infrastructure.imports.local_dummy import LocalDummyImportAdapter
 from app.infrastructure.imports.fake_email import FakeEmailImportAdapter
 from app.infrastructure.db.session import get_db
@@ -37,6 +38,7 @@ from app.infrastructure.storage.local import LocalObjectStorage
 bearer = HTTPBearer()
 storage = LocalObjectStorage()
 events = InProcessEventPublisher()
+task_registry = build_default_task_registry()
 
 
 def get_db_session():
@@ -105,6 +107,10 @@ def get_storage() -> LocalObjectStorage:
 
 def get_event_publisher() -> InProcessEventPublisher:
     return events
+
+
+def get_task_registry() -> TaskRegistry:
+    return task_registry
 
 
 def get_auth_use_cases(
@@ -179,8 +185,10 @@ def get_travel_use_cases(
 def get_job_use_cases(
     jobs: SqlAlchemyJobRepository = Depends(get_job_repository),
     event_publisher: InProcessEventPublisher = Depends(get_event_publisher),
+    audits: SqlAlchemyAuditRepository = Depends(get_audit_repository),
+    tasks: TaskRegistry = Depends(get_task_registry),
 ) -> JobUseCases:
-    return JobUseCases(jobs, event_publisher)
+    return JobUseCases(jobs, event_publisher, tasks, audits)
 
 
 def get_fake_email_adapter() -> FakeEmailImportAdapter:

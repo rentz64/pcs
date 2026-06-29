@@ -121,6 +121,9 @@ class JobRepository(Protocol):
     def get(self, job_id: int) -> Job | None:
         ...
 
+    def next_queued(self) -> Job | None:
+        ...
+
     def count_by_status(self) -> dict[JobStatus, int]:
         ...
 

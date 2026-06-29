@@ -1,5 +1,16 @@
 # Changelog
 
+## Sprint 10
+
+- Added the executable Task Execution Engine on top of the Sprint 9 job foundation.
+- Added task definitions, handlers, execution context/result models, and an in-process task registry.
+- Added default local-only task handlers for no-op, intentional failure, content reindex placeholder, and import placeholder tasks.
+- Extended jobs with task type, JSON payload/result fields, attempts, retry limits, and queued/started/completed timestamps.
+- Added job execution, execute-next, retry, cancel, listing, and status use cases with state-transition rules.
+- Added `/system/jobs` API endpoints for enqueuing and manually executing background tasks without an external scheduler.
+- Added internal event and audit records for queued, started, succeeded, failed, retried, and cancelled jobs.
+- Added Sprint 10 task registry, execution, state transition, retry/cancel, failing task, API, audit, and regression tests.
+
 ## Sprint 9
 
 - Added centralized runtime configuration with sanitized configuration summaries.

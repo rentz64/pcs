@@ -22,6 +22,29 @@ class Pagination(BaseModel):
     total: int | None = None
 
 
+class JobCreate(BaseModel):
+    task_type: str
+    payload: dict[str, object] = {}
+    max_attempts: int = 1
+
+
+class JobOut(BaseModel):
+    id: int
+    name: str
+    task_type: str
+    status: str
+    payload_json: dict[str, object]
+    result_json: dict[str, object] | None
+    error_message: str | None
+    attempts: int
+    max_attempts: int
+    queued_at: datetime | None
+    started_at: datetime | None
+    completed_at: datetime | None
+    created_at: datetime | None
+    updated_at: datetime | None
+
+
 class ContentOut(BaseModel):
     id: int
     title: str

@@ -25,6 +25,7 @@ def get_db():
 def create_schema() -> None:
     Base.metadata.create_all(bind=engine)
     _ensure_sqlite_content_import_columns()
+    _ensure_sqlite_job_execution_columns()
 
 
 def _ensure_sqlite_content_import_columns() -> None:
@@ -49,3 +50,26 @@ def _ensure_sqlite_content_import_columns() -> None:
         for name, definition in columns.items():
             if name not in existing:
                 connection.execute(text(f"ALTER TABLE content_items ADD COLUMN {name} {definition}"))
+
+
+def _ensure_sqlite_job_execution_columns() -> None:
+    if not settings.database_url.startswith("sqlite"):
+        return
+    inspector = inspect(engine)
+    if "jobs" not in inspector.get_table_names():
+        return
+    existing = {column["name"] for column in inspector.get_columns("jobs")}
+    columns = {
+        "task_type": "VARCHAR(128) DEFAULT 'system.noop'",
+        "payload_json": "TEXT DEFAULT '{}'",
+        "result_json": "TEXT",
+        "attempts": "INTEGER DEFAULT 0",
+        "max_attempts": "INTEGER DEFAULT 1",
+        "queued_at": "DATETIME",
+        "started_at": "DATETIME",
+        "completed_at": "DATETIME",
+    }
+    with engine.begin() as connection:
+        for name, definition in columns.items():
+            if name not in existing:
+                connection.execute(text(f"ALTER TABLE jobs ADD COLUMN {name} {definition}"))

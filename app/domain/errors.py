@@ -54,6 +54,18 @@ class JobNotFound(DomainError):
     pass
 
 
+class InvalidJobState(DomainError):
+    pass
+
+
+class JobAttemptsExhausted(DomainError):
+    pass
+
+
+class TaskHandlerNotFound(DomainError):
+    pass
+
+
 class InvalidMediaType(DomainError):
     pass
 
