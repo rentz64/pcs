@@ -50,6 +50,10 @@ class ImportAdapterNotFound(DomainError):
     pass
 
 
+class JobNotFound(DomainError):
+    pass
+
+
 class InvalidMediaType(DomainError):
     pass
 

@@ -6,6 +6,7 @@ from .blog import BlogPost
 from .entities import AuditEntry, ContentItem, User
 from .email import EmailAttachment, EmailMessage
 from .imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob
+from .jobs import Job, JobStatus
 from .media import MediaItem
 from .travel import TravelItinerary, TravelPlace, TravelRoute
 
@@ -104,6 +105,23 @@ class ImportJobRepository(Protocol):
 
 class ImportBatchRepository(Protocol):
     def add(self, batch: ImportBatch) -> ImportBatch:
+        ...
+
+
+class JobRepository(Protocol):
+    def add(self, job: Job) -> Job:
+        ...
+
+    def update(self, job: Job) -> Job:
+        ...
+
+    def list(self) -> list[Job]:
+        ...
+
+    def get(self, job_id: int) -> Job | None:
+        ...
+
+    def count_by_status(self) -> dict[JobStatus, int]:
         ...
 
 

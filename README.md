@@ -13,19 +13,23 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 5. File download.
 6. Content library listing.
 7. Search by title, description, filename, tags, and content type.
-8. External import foundation with source/account registration, import jobs, and imported content provenance.
-9. Media library foundation for image and video uploads.
-10. Email mirroring foundation using a fake/local adapter.
-11. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
-12. Travel itinerary foundation with places and routes.
-13. Audit logging for important actions.
-14. Test suite using pytest and FastAPI TestClient.
+8. Central runtime configuration with a sanitized status summary.
+9. System health and status endpoints for API, database, object storage, and background job foundation checks.
+10. External import foundation with source/account registration, import jobs, and imported content provenance.
+11. Media library foundation for image and video uploads.
+12. Email mirroring foundation using a fake/local adapter.
+13. Blog post draft, publish, unpublish, listing, slug lookup, and search workflows.
+14. Travel itinerary foundation with places and routes.
+15. Background job domain/use-case foundation without a real async scheduler.
+16. Internal in-process application event publisher separate from audit logging.
+17. Audit logging for important actions.
+18. Test suite using pytest and FastAPI TestClient.
 
 Real Gmail OAuth, live email service connections, sending email, two-way mailbox sync, Google Drive, Maps, IMAP, OAuth integrations, cloud integrations, real map services, live geocoding, route optimisation, advanced media processing, AI classification, OCR, transcription, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter. Sprint 8 adds travel itineraries, places, and routes as specialised content without live map integrations.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter. Sprint 8 adds travel itineraries, places, and routes as specialised content without live map integrations. Sprint 9 adds application infrastructure for configuration, health/status, background jobs, internal events, and cleaner OpenAPI discovery before UI work begins.
 
 ## Project structure
 
@@ -137,6 +141,23 @@ PUT /travel/routes/{route_id}
 DELETE /travel/routes/{route_id}
 ```
 
+## System API
+
+Sprint 9 adds public system endpoints for local runtime checks:
+
+```text
+GET /system/health
+GET /system/status
+```
+
+These endpoints report the API version, SQLite status, local object storage status, and background job foundation status. `/system/status` also includes a sanitized runtime configuration summary and never exposes secrets.
+
+## Background jobs and events
+
+Sprint 9 introduces a generic `Job` domain model with queued, running, succeeded, failed, and cancelled states plus job repository/use-case ports. The current implementation is a foundation only; it stores jobs in SQLite and does not run a real async scheduler.
+
+Internal `ApplicationEvent` publishing is handled by a simple in-process publisher. Audit logging remains a separate user/action record and is not replaced by internal events.
+
 ## Installation
 
 Run commands from the repository root.
@@ -196,11 +217,12 @@ Change this before using the service with real data.
 5. Search with `GET /content/search?q=...`.
 
 6. Download with `GET /content/{content_id}/download`.
-7. Manage blog posts under `/blog/posts`.
-8. Register import sources/accounts and execute import jobs under `/imports`.
-9. Upload and download media under `/media`.
-10. Import and browse fake mirrored email under `/email`.
-11. Manage travel itineraries, places, and routes under `/travel`.
+7. Check system health with `GET /system/health`.
+8. Manage blog posts under `/blog/posts`.
+9. Register import sources/accounts and execute import jobs under `/imports`.
+10. Upload and download media under `/media`.
+11. Import and browse fake mirrored email under `/email`.
+12. Manage travel itineraries, places, and routes under `/travel`.
 
 ## Local storage layout
 

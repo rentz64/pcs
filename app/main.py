@@ -16,6 +16,7 @@ from app.interfaces.api.routes_content import router as content_router
 from app.interfaces.api.routes_email import router as email_router
 from app.interfaces.api.routes_imports import router as imports_router
 from app.interfaces.api.routes_media import router as media_router
+from app.interfaces.api.routes_system import router as system_router
 from app.interfaces.api.routes_travel import router as travel_router
 
 
@@ -42,21 +43,27 @@ async def lifespan(app: FastAPI):
         engine.dispose()
 
 
-app = FastAPI(title=settings.app_name, lifespan=lifespan)
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.api_version,
+    description=settings.description,
+    lifespan=lifespan,
+)
 
 
-@app.get("/health")
+@app.get("/health", tags=["system"])
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-app.include_router(auth_router)
-app.include_router(content_router)
-app.include_router(blog_router)
-app.include_router(imports_router)
-app.include_router(media_router)
-app.include_router(email_router)
-app.include_router(travel_router)
-app.include_router(audit_router)
+app.include_router(auth_router, tags=["auth"])
+app.include_router(content_router, tags=["content"])
+app.include_router(blog_router, tags=["blog"])
+app.include_router(imports_router, tags=["imports"])
+app.include_router(media_router, tags=["media"])
+app.include_router(email_router, tags=["email"])
+app.include_router(travel_router, tags=["travel"])
+app.include_router(audit_router, tags=["audit"])
+app.include_router(system_router)
 
 _ = orm_models

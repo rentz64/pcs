@@ -63,6 +63,12 @@ class CreateImportJobCommand:
 
 
 @dataclass(frozen=True)
+class CreateJobCommand:
+    name: str
+    payload: dict[str, str] | None = None
+
+
+@dataclass(frozen=True)
 class UploadMediaCommand:
     title: str
     description: str | None

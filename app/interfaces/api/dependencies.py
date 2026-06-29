@@ -6,6 +6,7 @@ from app.application.auth_use_cases import AuthUseCases
 from app.application.blog_use_cases import BlogPostUseCases
 from app.application.content_use_cases import ContentUseCases
 from app.application.import_use_cases import ImportUseCases
+from app.application.job_use_cases import JobUseCases
 from app.application.email_use_cases import EmailUseCases
 from app.application.media_use_cases import MediaUseCases
 from app.application.travel_use_cases import TravelUseCases
@@ -20,10 +21,12 @@ from app.infrastructure.db.repositories import (
     SqlAlchemyEmailRepository,
     SqlAlchemyImportBatchRepository,
     SqlAlchemyImportJobRepository,
+    SqlAlchemyJobRepository,
     SqlAlchemyMediaRepository,
     SqlAlchemyTravelRepository,
     SqlAlchemyUserRepository,
 )
+from app.infrastructure.events import InProcessEventPublisher
 from app.infrastructure.imports.local_dummy import LocalDummyImportAdapter
 from app.infrastructure.imports.fake_email import FakeEmailImportAdapter
 from app.infrastructure.db.session import get_db
@@ -33,6 +36,7 @@ from app.infrastructure.storage.local import LocalObjectStorage
 
 bearer = HTTPBearer()
 storage = LocalObjectStorage()
+events = InProcessEventPublisher()
 
 
 def get_db_session():
@@ -83,6 +87,10 @@ def get_import_batch_repository(db: Session = Depends(get_db_session)) -> SqlAlc
     return SqlAlchemyImportBatchRepository(db)
 
 
+def get_job_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyJobRepository:
+    return SqlAlchemyJobRepository(db)
+
+
 def get_password_hasher() -> Pbkdf2PasswordHasher:
     return Pbkdf2PasswordHasher()
 
@@ -93,6 +101,10 @@ def get_token_service() -> HmacTokenService:
 
 def get_storage() -> LocalObjectStorage:
     return storage
+
+
+def get_event_publisher() -> InProcessEventPublisher:
+    return events
 
 
 def get_auth_use_cases(
@@ -162,6 +174,13 @@ def get_travel_use_cases(
     audits: SqlAlchemyAuditRepository = Depends(get_audit_repository),
 ) -> TravelUseCases:
     return TravelUseCases(travel, content, audits)
+
+
+def get_job_use_cases(
+    jobs: SqlAlchemyJobRepository = Depends(get_job_repository),
+    event_publisher: InProcessEventPublisher = Depends(get_event_publisher),
+) -> JobUseCases:
+    return JobUseCases(jobs, event_publisher)
 
 
 def get_fake_email_adapter() -> FakeEmailImportAdapter:

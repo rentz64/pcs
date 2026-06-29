@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -5,6 +7,7 @@ from app.domain.blog import BlogPost, BlogStatus
 from app.domain.entities import AuditEntry, ContentItem, User
 from app.domain.email import EmailAttachment, EmailMessage
 from app.domain.imports import ExternalAccount, ExternalSource, ImportBatch, ImportJob, ImportJobStatus
+from app.domain.jobs import Job, JobStatus
 from app.domain.media import MediaItem, MediaType
 from app.domain.repositories import SearchQuery
 from app.domain.travel import ItineraryStatus, TravelItinerary, TravelPlace, TravelRoute
@@ -218,6 +221,19 @@ def _import_batch(row: orm_models.ImportBatch) -> ImportBatch:
         account_id=row.account_id,
         imported_count=row.imported_count,
         created_at=row.created_at,
+    )
+
+
+def _job(row: orm_models.Job) -> Job:
+    return Job(
+        id=row.id,
+        name=row.name,
+        status=JobStatus(row.status),
+        payload=json.loads(row.payload),
+        result=row.result,
+        error_message=row.error_message,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
     )
 
 
@@ -867,6 +883,53 @@ class SqlAlchemyImportBatchRepository:
         self.db.commit()
         self.db.refresh(row)
         return _import_batch(row)
+
+
+class SqlAlchemyJobRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add(self, job: Job) -> Job:
+        row = orm_models.Job(
+            name=job.name,
+            status=job.status.value,
+            payload=json.dumps(job.payload, sort_keys=True),
+            result=job.result,
+            error_message=job.error_message,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _job(row)
+
+    def update(self, job: Job) -> Job:
+        row = self.db.query(orm_models.Job).filter(orm_models.Job.id == job.id).first()
+        if row is None:
+            raise ValueError("Job not found")
+        row.status = job.status.value
+        row.payload = json.dumps(job.payload, sort_keys=True)
+        row.result = job.result
+        row.error_message = job.error_message
+        row.updated_at = orm_models.now_utc()
+        self.db.commit()
+        self.db.refresh(row)
+        return _job(row)
+
+    def list(self) -> list[Job]:
+        rows = self.db.query(orm_models.Job).order_by(orm_models.Job.created_at.desc()).all()
+        return [_job(row) for row in rows]
+
+    def get(self, job_id: int) -> Job | None:
+        row = self.db.query(orm_models.Job).filter(orm_models.Job.id == job_id).first()
+        return _job(row) if row else None
+
+    def count_by_status(self) -> dict[JobStatus, int]:
+        counts = {status: 0 for status in JobStatus}
+        rows = self.db.query(orm_models.Job.status).all()
+        for (status,) in rows:
+            counts[JobStatus(status)] += 1
+        return counts
+
 
 class SqlAlchemyAuditRepository:
     def __init__(self, db: Session):

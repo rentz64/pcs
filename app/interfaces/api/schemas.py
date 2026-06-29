@@ -12,6 +12,16 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class ErrorResponse(BaseModel):
+    detail: str
+
+
+class Pagination(BaseModel):
+    limit: int = 100
+    offset: int = 0
+    total: int | None = None
+
+
 class ContentOut(BaseModel):
     id: int
     title: str

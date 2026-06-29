@@ -1,5 +1,15 @@
 # Changelog
 
+## Sprint 9
+
+- Added centralized runtime configuration with sanitized configuration summaries.
+- Added `/system/health` and `/system/status` endpoints for API version, SQLite, local object storage, and background job foundation status.
+- Added generic background job domain model, repository port, SQLite repository, and job lifecycle use cases.
+- Added internal `ApplicationEvent` and in-process event publisher while keeping audit logging separate.
+- Added reusable error response and pagination schema models for future API consistency without changing existing endpoint contracts.
+- Improved OpenAPI metadata with title, version, description, and route tags.
+- Added Sprint 9 unit, API, OpenAPI, and regression tests.
+
 ## Sprint 8
 
 - Added Travel Itinerary Foundation as a specialised content type on the Unified Content Platform.
