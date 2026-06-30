@@ -2,6 +2,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import BinaryIO, Protocol
 
+from .archive_import import ArchiveFile, ArchiveImportSet
 from .blog import BlogPost
 from .entities import AuditEntry, ContentItem, User
 from .email import EmailAttachment, EmailMessage
@@ -105,6 +106,31 @@ class ImportJobRepository(Protocol):
 
 class ImportBatchRepository(Protocol):
     def add(self, batch: ImportBatch) -> ImportBatch:
+        ...
+
+
+class ArchiveImportSetRepository(Protocol):
+    def add(self, import_set: ArchiveImportSet) -> ArchiveImportSet:
+        ...
+
+    def list_for_owner(self, owner_id: int) -> list[ArchiveImportSet]:
+        ...
+
+    def get_for_owner(self, import_set_id: int, owner_id: int) -> ArchiveImportSet | None:
+        ...
+
+
+class ArchiveFileRepository(Protocol):
+    def add(self, archive: ArchiveFile) -> ArchiveFile:
+        ...
+
+    def update(self, archive: ArchiveFile) -> ArchiveFile:
+        ...
+
+    def list_for_import_set(self, import_set_id: int) -> list[ArchiveFile]:
+        ...
+
+    def get(self, archive_id: int) -> ArchiveFile | None:
         ...
 
 

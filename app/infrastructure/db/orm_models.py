@@ -42,6 +42,11 @@ class ContentItem(Base):
     import_batch_id: Mapped[int | None] = mapped_column(ForeignKey("import_batches.id"), nullable=True, index=True)
     source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
+    import_set_id: Mapped[int | None] = mapped_column(ForeignKey("archive_import_sets.id"), nullable=True, index=True)
+    archive_file_id: Mapped[int | None] = mapped_column(ForeignKey("archive_files.id"), nullable=True, index=True)
+    original_archive_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    original_archive_internal_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    normalised_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
@@ -217,6 +222,33 @@ class ImportBatch(Base):
     account_id: Mapped[int] = mapped_column(ForeignKey("external_accounts.id"), index=True)
     imported_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+
+
+class ArchiveImportSet(Base):
+    __tablename__ = "archive_import_sets"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    external_source_id: Mapped[int] = mapped_column(ForeignKey("external_sources.id"), index=True)
+    external_account_id: Mapped[int] = mapped_column(ForeignKey("external_accounts.id"), index=True)
+    display_name: Mapped[str] = mapped_column(String(255), index=True)
+    source_type: Mapped[str] = mapped_column(String(64), index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+
+
+class ArchiveFile(Base):
+    __tablename__ = "archive_files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    import_set_id: Mapped[int] = mapped_column(ForeignKey("archive_import_sets.id"), index=True)
+    original_filename: Mapped[str] = mapped_column(String(255))
+    stored_filename: Mapped[str] = mapped_column(String(255))
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    sha256_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="registered", index=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    registered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
 
 
 class Job(Base):

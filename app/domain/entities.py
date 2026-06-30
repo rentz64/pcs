@@ -69,6 +69,11 @@ class ContentItem:
     import_batch_id: int | None = None
     source_url: str | None = None
     source_reference: str | None = None
+    import_set_id: int | None = None
+    archive_file_id: int | None = None
+    original_archive_filename: str | None = None
+    original_archive_internal_path: str | None = None
+    normalised_path: str | None = None
     metadata: ContentMetadata | None = None
     collections: tuple[CollectionRef, ...] = ()
     version: VersionMetadata = field(default_factory=VersionMetadata)

@@ -3,6 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.application.auth_use_cases import AuthUseCases
+from app.application.archive_import_use_cases import ArchiveImportUseCases
 from app.application.blog_use_cases import BlogPostUseCases
 from app.application.content_use_cases import ContentUseCases
 from app.application.import_use_cases import ImportUseCases
@@ -14,6 +15,8 @@ from app.domain.entities import User
 from app.domain.errors import InvalidToken, UnknownUser
 from app.infrastructure.db.repositories import (
     SqlAlchemyAuditRepository,
+    SqlAlchemyArchiveFileRepository,
+    SqlAlchemyArchiveImportSetRepository,
     SqlAlchemyBlogPostRepository,
     SqlAlchemyContentRepository,
     SqlAlchemyExternalAccountRepository,
@@ -28,6 +31,8 @@ from app.infrastructure.db.repositories import (
 )
 from app.infrastructure.events import InProcessEventPublisher
 from app.domain.tasks import TaskRegistry, build_default_task_registry
+from app.infrastructure.archive_import.mbox import iter_mbox_payloads
+from app.infrastructure.archive_import.scanner import ZipArchiveScanner
 from app.infrastructure.imports.local_dummy import LocalDummyImportAdapter
 from app.infrastructure.imports.fake_email import FakeEmailImportAdapter
 from app.infrastructure.db.session import get_db
@@ -93,6 +98,14 @@ def get_job_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyJobRe
     return SqlAlchemyJobRepository(db)
 
 
+def get_archive_import_set_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyArchiveImportSetRepository:
+    return SqlAlchemyArchiveImportSetRepository(db)
+
+
+def get_archive_file_repository(db: Session = Depends(get_db_session)) -> SqlAlchemyArchiveFileRepository:
+    return SqlAlchemyArchiveFileRepository(db)
+
+
 def get_password_hasher() -> Pbkdf2PasswordHasher:
     return Pbkdf2PasswordHasher()
 
@@ -111,6 +124,10 @@ def get_event_publisher() -> InProcessEventPublisher:
 
 def get_task_registry() -> TaskRegistry:
     return task_registry
+
+
+def get_archive_scanner() -> ZipArchiveScanner:
+    return ZipArchiveScanner()
 
 
 def get_auth_use_cases(
@@ -189,6 +206,35 @@ def get_job_use_cases(
     tasks: TaskRegistry = Depends(get_task_registry),
 ) -> JobUseCases:
     return JobUseCases(jobs, event_publisher, tasks, audits)
+
+
+def get_archive_import_use_cases(
+    import_sets: SqlAlchemyArchiveImportSetRepository = Depends(get_archive_import_set_repository),
+    archives: SqlAlchemyArchiveFileRepository = Depends(get_archive_file_repository),
+    sources: SqlAlchemyExternalSourceRepository = Depends(get_external_source_repository),
+    accounts: SqlAlchemyExternalAccountRepository = Depends(get_external_account_repository),
+    import_jobs: SqlAlchemyImportJobRepository = Depends(get_import_job_repository),
+    batches: SqlAlchemyImportBatchRepository = Depends(get_import_batch_repository),
+    content: SqlAlchemyContentRepository = Depends(get_content_repository),
+    emails: SqlAlchemyEmailRepository = Depends(get_email_repository),
+    audits: SqlAlchemyAuditRepository = Depends(get_audit_repository),
+    object_storage: LocalObjectStorage = Depends(get_storage),
+    scanner: ZipArchiveScanner = Depends(get_archive_scanner),
+) -> ArchiveImportUseCases:
+    return ArchiveImportUseCases(
+        import_sets,
+        archives,
+        sources,
+        accounts,
+        import_jobs,
+        batches,
+        content,
+        emails,
+        audits,
+        object_storage,
+        scanner,
+        iter_mbox_payloads,
+    )
 
 
 def get_fake_email_adapter() -> FakeEmailImportAdapter:

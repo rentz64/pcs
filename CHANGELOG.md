@@ -1,5 +1,17 @@
 # Changelog
 
+## Sprint 11
+
+- Added Google Takeout and generic ZIP archive import sets for grouping multiple archives by external account/export set.
+- Added archive file registration with local storage, size tracking, SHA-256 hashing, status, and error metadata.
+- Added ZIP scanning without full extraction, including standard `Takeout/` services and arbitrary wrapper roots such as `t1/` and `t2/`.
+- Added service/content classification for Gmail MBOX, Drive-like files, Calendar ICS, Contacts VCF, Tasks, Maps, Chrome bookmarks, photos-like media, and generic archive/binary files.
+- Added file-like archive import into local object storage and `ContentItem` records with import set, archive, original ZIP path, normalised path, account, source, batch, and import timestamp provenance.
+- Added streaming-oriented synthetic MBOX import foundation using the existing Email Mirroring repository behavior for duplicate message safety.
+- Added `/archive-import` API routes for import set lifecycle, archive registration/listing, archive/import-set scanning, import execution, and summaries.
+- Added audit records for import set creation, archive registration/scanning, import start/completion, and imported content.
+- Added synthetic archive, arbitrary-root, multiple-ZIP, provenance, MBOX duplicate, account separation, and owner scoping tests.
+
 ## Sprint 10
 
 - Added the executable Task Execution Engine on top of the Sprint 9 job foundation.

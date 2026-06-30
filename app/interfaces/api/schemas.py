@@ -45,6 +45,68 @@ class JobOut(BaseModel):
     updated_at: datetime | None
 
 
+class ArchiveImportSetCreate(BaseModel):
+    display_name: str
+    account_label: str
+    source_type: str = "google_takeout"
+    notes: str | None = None
+
+
+class ArchiveImportSetOut(BaseModel):
+    id: int
+    owner_id: int
+    external_source_id: int
+    external_account_id: int
+    display_name: str
+    source_type: str
+    notes: str | None
+    created_at: datetime | None
+
+
+class ArchiveFileOut(BaseModel):
+    id: int
+    import_set_id: int
+    original_filename: str
+    size_bytes: int
+    sha256_hash: str | None
+    status: str
+    error_message: str | None
+    registered_at: datetime | None
+
+
+class ArchiveEntryOut(BaseModel):
+    original_path: str
+    normalised_path: str
+    service: str
+    content_type: str
+    extension: str
+    size_bytes: int
+
+
+class ArchiveScanSummaryOut(BaseModel):
+    archive_file_id: int | None
+    top_level_folders: list[str]
+    entries: list[ArchiveEntryOut]
+    counts_by_service: dict[str, int]
+    counts_by_content_type: dict[str, int]
+    counts_by_extension: dict[str, int]
+
+
+class ImportSetSummaryOut(BaseModel):
+    import_set_id: int
+    archive_count: int
+    entries_count: int
+    counts_by_service: dict[str, int]
+    counts_by_content_type: dict[str, int]
+    counts_by_extension: dict[str, int]
+
+
+class ArchiveImportResultOut(BaseModel):
+    import_set_id: int
+    imported_count: int
+    email_count: int
+
+
 class ContentOut(BaseModel):
     id: int
     title: str
