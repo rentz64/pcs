@@ -22,14 +22,15 @@ The current backend preserves the Release 1.1 API contract and implements the fi
 14. Travel itinerary foundation with places and routes.
 15. Executable background task engine with manual local job execution.
 16. Internal in-process application event publisher separate from audit logging.
-17. Audit logging for important actions.
-18. Test suite using pytest and FastAPI TestClient.
+17. Google Takeout and generic ZIP archive import foundation.
+18. Audit logging for important actions.
+19. Test suite using pytest and FastAPI TestClient.
 
 Real Gmail OAuth, live email service connections, sending email, two-way mailbox sync, Google Drive, Maps, IMAP, OAuth integrations, cloud integrations, real map services, live geocoding, route optimisation, advanced media processing, AI classification, OCR, transcription, collaborative editing, advanced full-text extraction, and frontend UI are intentionally outside the current scope.
 
 ## Technology choices
 
-The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter. Sprint 8 adds travel itineraries, places, and routes as specialised content without live map integrations. Sprint 9 adds application infrastructure for configuration, health/status, background jobs, internal events, and cleaner OpenAPI discovery before UI work begins. Sprint 10 turns the job foundation into a manual local task execution engine without external schedulers.
+The backend uses Python 3.14, FastAPI, SQLite through SQLAlchemy, and local filesystem object storage. Sprint 2 arranged the code as Clean Architecture / Ports and Adapters while keeping SQLite and local storage as infrastructure details. Sprint 3 adds the internal Unified Content Platform foundation: shared content metadata, tag normalization, collection references, version metadata, a search port, and a content type handler registry. Sprint 4 adds the External Import Foundation on top of `ContentItem` provenance metadata. Sprint 6 adds media library foundations for image and video content. Sprint 7 adds email mirroring foundations with a fake/local import adapter. Sprint 8 adds travel itineraries, places, and routes as specialised content without live map integrations. Sprint 9 adds application infrastructure for configuration, health/status, background jobs, internal events, and cleaner OpenAPI discovery before UI work begins. Sprint 10 turns the job foundation into a manual local task execution engine without external schedulers. Sprint 11 adds Google Takeout and generic ZIP archive import sets for local archive ingestion without Google APIs or OAuth.
 
 ## Project structure
 
@@ -84,6 +85,26 @@ POST /imports/jobs
 GET /imports/jobs
 GET /imports/jobs/{job_id}
 ```
+
+## Archive Import API
+
+Sprint 11 adds local ZIP archive import sets for Google Takeout and generic file archives. An import set groups one or more ZIP files that belong to a specific external account/export set, so separate Google accounts remain distinguishable over time.
+
+```text
+POST /archive-import/import-sets
+GET /archive-import/import-sets
+GET /archive-import/import-sets/{import_set_id}
+POST /archive-import/import-sets/{import_set_id}/archives
+GET /archive-import/import-sets/{import_set_id}/archives
+POST /archive-import/archives/{archive_id}/scan
+POST /archive-import/import-sets/{import_set_id}/scan
+POST /archive-import/import-sets/{import_set_id}/import
+GET /archive-import/import-sets/{import_set_id}/summary
+```
+
+The scanner inspects ZIP central-directory metadata and individual entries without extracting the full archive. It recognises standard `Takeout/` paths and artificial wrapper roots such as `t1/` or `t2/` from manually split archives. Original internal ZIP paths are preserved while logical paths are normalised for classification.
+
+Initial import supports file-like content such as PDFs, Office documents, images, videos, text files, ZIP/TGZ archives, and generic binaries. Gmail MBOX support is streaming-oriented and imports synthetic/simple messages through the existing Email Mirroring foundation; attachment extraction and full Gmail label fidelity remain future work.
 
 ## Blog API
 
@@ -252,6 +273,7 @@ Change this before using the service with real data.
 10. Upload and download media under `/media`.
 11. Import and browse fake mirrored email under `/email`.
 12. Manage travel itineraries, places, and routes under `/travel`.
+13. Register and scan local Takeout/archive ZIPs under `/archive-import`.
 
 ## Local storage layout
 

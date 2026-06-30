@@ -45,6 +45,11 @@ def _ensure_sqlite_content_import_columns() -> None:
         "import_batch_id": "INTEGER",
         "source_url": "TEXT",
         "source_reference": "TEXT",
+        "import_set_id": "INTEGER",
+        "archive_file_id": "INTEGER",
+        "original_archive_filename": "VARCHAR(255)",
+        "original_archive_internal_path": "TEXT",
+        "normalised_path": "TEXT",
     }
     with engine.begin() as connection:
         for name, definition in columns.items():

@@ -50,6 +50,14 @@ class ImportAdapterNotFound(DomainError):
     pass
 
 
+class ArchiveImportSetNotFound(DomainError):
+    pass
+
+
+class ArchiveFileNotFound(DomainError):
+    pass
+
+
 class JobNotFound(DomainError):
     pass
 

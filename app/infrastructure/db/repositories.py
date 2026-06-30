@@ -3,6 +3,7 @@ import json
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.domain.archive_import import ArchiveFile, ArchiveImportSet, ArchiveStatus
 from app.domain.blog import BlogPost, BlogStatus
 from app.domain.entities import AuditEntry, ContentItem, User
 from app.domain.email import EmailAttachment, EmailMessage
@@ -45,6 +46,11 @@ def _content(row: orm_models.ContentItem) -> ContentItem:
         import_batch_id=row.import_batch_id,
         source_url=row.source_url,
         source_reference=row.source_reference,
+        import_set_id=row.import_set_id,
+        archive_file_id=row.archive_file_id,
+        original_archive_filename=row.original_archive_filename,
+        original_archive_internal_path=row.original_archive_internal_path,
+        normalised_path=row.normalised_path,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
@@ -247,6 +253,33 @@ def _job(row: orm_models.Job) -> Job:
     )
 
 
+def _archive_import_set(row: orm_models.ArchiveImportSet) -> ArchiveImportSet:
+    return ArchiveImportSet(
+        id=row.id,
+        owner_id=row.owner_id,
+        external_source_id=row.external_source_id,
+        external_account_id=row.external_account_id,
+        display_name=row.display_name,
+        source_type=row.source_type,
+        notes=row.notes,
+        created_at=row.created_at,
+    )
+
+
+def _archive_file(row: orm_models.ArchiveFile) -> ArchiveFile:
+    return ArchiveFile(
+        id=row.id,
+        import_set_id=row.import_set_id,
+        original_filename=row.original_filename,
+        stored_filename=row.stored_filename,
+        size_bytes=row.size_bytes,
+        sha256_hash=row.sha256_hash,
+        status=ArchiveStatus(row.status),
+        error_message=row.error_message,
+        registered_at=row.registered_at,
+    )
+
+
 class SqlAlchemyUserRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -287,6 +320,11 @@ class SqlAlchemyContentRepository:
             import_batch_id=item.import_batch_id,
             source_url=item.source_url,
             source_reference=item.source_reference,
+            import_set_id=item.import_set_id,
+            archive_file_id=item.archive_file_id,
+            original_archive_filename=item.original_archive_filename,
+            original_archive_internal_path=item.original_archive_internal_path,
+            normalised_path=item.normalised_path,
         )
         self.db.add(row)
         self.db.commit()
@@ -893,6 +931,85 @@ class SqlAlchemyImportBatchRepository:
         self.db.commit()
         self.db.refresh(row)
         return _import_batch(row)
+
+
+class SqlAlchemyArchiveImportSetRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add(self, import_set: ArchiveImportSet) -> ArchiveImportSet:
+        row = orm_models.ArchiveImportSet(
+            owner_id=import_set.owner_id,
+            external_source_id=import_set.external_source_id,
+            external_account_id=import_set.external_account_id,
+            display_name=import_set.display_name,
+            source_type=import_set.source_type,
+            notes=import_set.notes,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _archive_import_set(row)
+
+    def list_for_owner(self, owner_id: int) -> list[ArchiveImportSet]:
+        rows = (
+            self.db.query(orm_models.ArchiveImportSet)
+            .filter(orm_models.ArchiveImportSet.owner_id == owner_id)
+            .order_by(orm_models.ArchiveImportSet.created_at.desc())
+            .all()
+        )
+        return [_archive_import_set(row) for row in rows]
+
+    def get_for_owner(self, import_set_id: int, owner_id: int) -> ArchiveImportSet | None:
+        row = (
+            self.db.query(orm_models.ArchiveImportSet)
+            .filter(orm_models.ArchiveImportSet.id == import_set_id, orm_models.ArchiveImportSet.owner_id == owner_id)
+            .first()
+        )
+        return _archive_import_set(row) if row else None
+
+
+class SqlAlchemyArchiveFileRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add(self, archive: ArchiveFile) -> ArchiveFile:
+        row = orm_models.ArchiveFile(
+            import_set_id=archive.import_set_id,
+            original_filename=archive.original_filename,
+            stored_filename=archive.stored_filename,
+            size_bytes=archive.size_bytes,
+            sha256_hash=archive.sha256_hash,
+            status=archive.status.value,
+            error_message=archive.error_message,
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        return _archive_file(row)
+
+    def update(self, archive: ArchiveFile) -> ArchiveFile:
+        row = self.db.query(orm_models.ArchiveFile).filter(orm_models.ArchiveFile.id == archive.id).first()
+        if row is None:
+            raise ValueError("Archive file not found")
+        row.status = archive.status.value
+        row.error_message = archive.error_message
+        self.db.commit()
+        self.db.refresh(row)
+        return _archive_file(row)
+
+    def list_for_import_set(self, import_set_id: int) -> list[ArchiveFile]:
+        rows = (
+            self.db.query(orm_models.ArchiveFile)
+            .filter(orm_models.ArchiveFile.import_set_id == import_set_id)
+            .order_by(orm_models.ArchiveFile.registered_at.asc(), orm_models.ArchiveFile.id.asc())
+            .all()
+        )
+        return [_archive_file(row) for row in rows]
+
+    def get(self, archive_id: int) -> ArchiveFile | None:
+        row = self.db.query(orm_models.ArchiveFile).filter(orm_models.ArchiveFile.id == archive_id).first()
+        return _archive_file(row) if row else None
 
 
 class SqlAlchemyJobRepository:
